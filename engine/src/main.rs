@@ -1,3 +1,6 @@
-fn main() {
-    println!("Hello, world!");
+mod storage;
+
+
+fn main(){
+    storage::row::insert_row();
 }
