@@ -1,6 +1,7 @@
+use serde::{Deserialize, Serialize};
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 enum DynamicField {
     Integer(i32),
     Text(String),
@@ -9,14 +10,14 @@ enum DynamicField {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Field {
     name: String,
     value: DynamicField,
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Row {
     fields: Vec<Field>,
 }
@@ -43,7 +44,14 @@ pub fn insert_row() {
         ],
     };
 
-    println!("{:#?}", row);
 
-    println!("Rows inserted")
+    let bytes: Vec<u8> = bincode::serialize(&row).unwrap();
+
+    println!("{:#?}", bytes);
+
+
+    let bytes_decode: Row = bincode::deserialize(&bytes).unwrap();
+
+    println!("{:#?}", bytes_decode)
+
 }
