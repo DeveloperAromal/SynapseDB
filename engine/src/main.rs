@@ -1,7 +1,15 @@
 mod storage;
-use storage::row::{DynamicField, Field, Row, insert_row};
+use storage::row::{DynamicField, Field, Row};
+
+use crate::storage::page::Page;
+
 fn main() {
-    
+    #[allow(dead_code)]
+    let mut page = Page::new(1);
+
+
+    println!("This is befor insertion: {}", page.rows.len());
+
     let row = Row {
         fields: vec![
             Field {
@@ -23,5 +31,9 @@ fn main() {
         ],
     };
 
-    insert_row(row);
+
+    page.insert_row(row);
+    println!("Insertion sucessfull");
+    println!("This is after insertion: {}", page.rows.len());
+
 }

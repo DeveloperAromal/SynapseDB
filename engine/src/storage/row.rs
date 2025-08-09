@@ -19,15 +19,15 @@ pub struct Row {
     pub fields: Vec<Field>,
 }
 
-pub fn insert_row(row : Row) {
-
-    let bytes: Vec<u8> = bincode::serialize(&row).unwrap();
-
-    println!("{:#?}", bytes);
 
 
-    let bytes_decode: Row = bincode::deserialize(&bytes).unwrap();
+// pub fn insert_row(row : Row) {
 
-    println!("{:#?}", bytes_decode)
+//     let bytes: Vec<u8> = bincode::serialize(&row).unwrap();
+//     println!("{:#?}", bytes);
 
-}
+
+//     let bytes_decode: Row = bincode::deserialize(&bytes).unwrap();
+//     println!("{:#?}", bytes_decode)
+
+// }
