@@ -24,6 +24,14 @@ impl Page {
         self.page_id
     }
 
+
+
+    #[allow(dead_code)]
+    pub fn get_num_rows(&self) -> usize{
+        self.rows.len()
+    }
+
+
     #[allow(dead_code)]
     pub fn insert_row(&mut self, row: Row) {
         let byte: Vec<u8> = bincode::serialize(&row).unwrap();
