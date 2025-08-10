@@ -4,7 +4,7 @@ use storage::table::Table;
 
 fn main() {
     #[allow(dead_code)]
-    let mut table = Table::new(1, "Test Table".to_string(), 2); // max 2 rows per page
+    let mut table = Table::new(1, "users".to_string(), 2); // max 2 rows per page
 
     let row1 = Row {
         fields: vec![
@@ -45,7 +45,7 @@ fn main() {
         ],
     };
 
-    table.insert_row(row1);
+    table.insert_row(row1); 
     table.insert_row(row2);
     table.insert_row(row3);
 

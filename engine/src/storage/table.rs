@@ -63,11 +63,12 @@ impl Table {
 
     #[allow(dead_code)]
     pub fn save_to_disk(&self) {
-        std::fs::create_dir_all("src/storage/tables").unwrap();
+        let table_path =  format!("src/storage/tables/{}", self.name.clone());
+        std::fs::create_dir_all(table_path).unwrap();
         for (i, page) in self.pages.iter().enumerate() {
             let data_byte: Vec<u8> = bincode::serialize(page).unwrap();
 
-            let file_path = format!("src/storage/tables/page_{}.bin", i);
+            let file_path = format!("src/storage/tables/{}/page_{}.bin", self.name.clone(), i);
             fs::write(file_path, data_byte).unwrap();
         }
 
@@ -79,6 +80,7 @@ impl Table {
         };
 
         let meta_byte = bincode::serialize(&table_metadata).unwrap();
-        fs::write("src/storage/tables/metadata.bin", meta_byte).unwrap();
+        let meta_path = format!("src/storage/tables/{}/metadata.bin", self.name.clone());
+        fs::write(meta_path, meta_byte).unwrap();
     }
 }
