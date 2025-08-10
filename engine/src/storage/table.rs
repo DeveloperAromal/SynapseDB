@@ -1,11 +1,20 @@
 use crate::storage::{page::Page, row::Row};
+use serde::{Deserialize, Serialize};
+use std::fs;
 
 #[allow(dead_code)]
 pub struct Table {
-    table_id: u32,
-    name: String,
-    pages: Vec<Page>,
-    max_rows_per_page: usize,
+    pub table_id: u32,
+    pub name: String,
+    pub pages: Vec<Page>,
+    pub max_rows_per_page: usize,
+}
+#[derive(Serialize, Deserialize)]
+pub struct Metadata {
+    pub table_id: u32,
+    pub name: String,
+    pub num_of_pages: usize,
+    pub max_rows_per_page: usize,
 }
 
 impl Table {
@@ -40,11 +49,36 @@ impl Table {
     }
 
     #[allow(dead_code)]
-    pub fn get_all_row(&self) {
+    pub fn get_all_rows(&self) {
         for page in &self.pages {
             for row in &page.rows {
                 println!("{:#?}", row)
             }
         }
+    }
+
+    pub fn get_num_rows(&self) -> usize {
+        self.pages.iter().map(|page| page.get_num_rows()).sum()
+    }
+
+    #[allow(dead_code)]
+    pub fn save_to_disk(&self) {
+        std::fs::create_dir_all("src/storage/tables").unwrap();
+        for (i, page) in self.pages.iter().enumerate() {
+            let data_byte: Vec<u8> = bincode::serialize(page).unwrap();
+
+            let file_path = format!("src/storage/tables/page_{}.bin", i);
+            fs::write(file_path, data_byte).unwrap();
+        }
+
+        let table_metadata = Metadata {
+            table_id: self.table_id,
+            name: self.name.clone(),
+            num_of_pages: self.pages.len(),
+            max_rows_per_page: self.max_rows_per_page,
+        };
+
+        let meta_byte = bincode::serialize(&table_metadata).unwrap();
+        fs::write("src/storage/tables/metadata.bin", meta_byte).unwrap();
     }
 }

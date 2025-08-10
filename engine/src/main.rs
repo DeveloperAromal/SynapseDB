@@ -1,16 +1,12 @@
 mod storage;
 use storage::row::{DynamicField, Field, Row};
-
-use crate::storage::page::Page;
+use storage::table::Table;
 
 fn main() {
     #[allow(dead_code)]
-    let mut page = Page::new(1);
+    let mut table = Table::new(1, "Test Table".to_string(), 2); // max 2 rows per page
 
-
-    println!("This is befor insertion: {}", page.rows.len());
-
-    let row = Row {
+    let row1 = Row {
         fields: vec![
             Field {
                 name: "id".to_string(),
@@ -20,20 +16,45 @@ fn main() {
                 name: "name".to_string(),
                 value: DynamicField::Text("Aromal".to_string()),
             },
+        ],
+    };
+
+    let row2 = Row {
+        fields: vec![
             Field {
-                name: "Phonenumber".to_string(),
-                value: DynamicField::Phonennumber(956999997.to_string()),
+                name: "id".to_string(),
+                value: DynamicField::Integer(2),
             },
             Field {
-                name: "email".to_string(),
-                value: DynamicField::Email("developeraromal@gmail.com".to_string()),
+                name: "name".to_string(),
+                value: DynamicField::Text("Alice".to_string()),
             },
         ],
     };
 
+    let row3 = Row {
+        fields: vec![
+            Field {
+                name: "id".to_string(),
+                value: DynamicField::Integer(3),
+            },
+            Field {
+                name: "name".to_string(),
+                value: DynamicField::Text("Bob".to_string()),
+            },
+        ],
+    };
 
-    page.insert_row(row);
-    println!("Insertion sucessfull");
-    println!("This is after insertion: {}", page.rows.len());
+    table.insert_row(row1);
+    table.insert_row(row2);
+    table.insert_row(row3);
 
+    println!("Total rows in table: {}", table.get_num_rows());
+
+    println!("Number of pages in table: {}", table.pages.len());
+
+    for (i, page) in table.pages.iter().enumerate() {
+        println!("Page {} has {} rows", i, page.get_num_rows());
+    }
+    table.save_to_disk();
 }
