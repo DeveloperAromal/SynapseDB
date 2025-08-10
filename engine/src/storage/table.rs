@@ -38,4 +38,13 @@ impl Table {
             }
         }
     }
+
+    #[allow(dead_code)]
+    pub fn get_all_row(&self) {
+        for page in &self.pages {
+            for row in &page.rows {
+                println!("{:#?}", row)
+            }
+        }
+    }
 }
