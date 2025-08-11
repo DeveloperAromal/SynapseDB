@@ -18,6 +18,13 @@ pub struct Metadata {
 }
 
 impl Table {
+    pub fn get_num_pages(&self) -> usize {
+        self.pages.len()
+    }
+
+    pub fn get_pages(&self) -> &Vec<Page> {
+        &self.pages
+    }
     #[allow(dead_code)]
     pub fn new(table_id: u32, name: String, max_rows_per_page: usize) -> Self {
         Self {
@@ -63,7 +70,7 @@ impl Table {
 
     #[allow(dead_code)]
     pub fn save_to_disk(&self) {
-        let table_path =  format!("src/storage/tables/{}", self.name.clone());
+        let table_path = format!("src/storage/tables/{}", self.name.clone());
         std::fs::create_dir_all(table_path).unwrap();
         for (i, page) in self.pages.iter().enumerate() {
             let data_byte: Vec<u8> = bincode::serialize(page).unwrap();

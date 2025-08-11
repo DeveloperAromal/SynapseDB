@@ -4,7 +4,7 @@ use storage::table::Table;
 
 fn main() {
     #[allow(dead_code)]
-    let mut table = Table::new(1, "users".to_string(), 2); // max 2 rows per page
+    let mut table = Table::new(1, "test".to_string(), 2);
 
     let row1 = Row {
         fields: vec![
@@ -45,15 +45,15 @@ fn main() {
         ],
     };
 
-    table.insert_row(row1); 
+    table.insert_row(row1);
     table.insert_row(row2);
     table.insert_row(row3);
 
     println!("Total rows in table: {}", table.get_num_rows());
 
-    println!("Number of pages in table: {}", table.pages.len());
+    println!("Number of pages in table: {}", table.get_num_pages());
 
-    for (i, page) in table.pages.iter().enumerate() {
+    for (i, page) in table.get_pages().iter().enumerate() {
         println!("Page {} has {} rows", i, page.get_num_rows());
     }
     table.save_to_disk();
