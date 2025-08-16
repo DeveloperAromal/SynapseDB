@@ -1,10 +1,11 @@
 mod storage;
 use storage::row::{DynamicField, Field, Row};
 use storage::table::Table;
+use storage::disk::load_data;
 
 fn main() {
     #[allow(dead_code)]
-    let mut table = Table::new(1, "test".to_string(), 2);
+    let mut table = Table::new(1, "hack".to_string(), 2);
 
     let row1 = Row {
         fields: vec![
@@ -56,5 +57,8 @@ fn main() {
     for (i, page) in table.get_pages().iter().enumerate() {
         println!("Page {} has {} rows", i, page.get_num_rows());
     }
-    table.save_to_disk();
+    table.save_to_disk();    
+
+    load_data("updates");
+
 }
