@@ -1,16 +1,11 @@
-use crate::storage::{page, row};
+use crate::storage::{page, row, table::Metadata};
 use std::{fs, path::Path};
-
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
-pub struct TableMetadata {
-    pub name: String,
-    pub num_of_pages: u32,
-}
 
 #[allow(dead_code)]
 pub fn load_data(table_name: &str) -> Vec<row::Row> {
     let meta_path = format!("src/storage/tables/{}/metadata.bin", table_name);
     println!("{}", table_name);
+
     if !Path::new(&meta_path).exists() {
         println!("Metadata not found for {}", table_name);
         return Vec::new();
@@ -20,11 +15,12 @@ pub fn load_data(table_name: &str) -> Vec<row::Row> {
         println!("Failed to read metadata file: {}", e);
         Vec::new()
     });
+
     if read_meta_byte.is_empty() {
         println!("Metadata file is empty: {}", meta_path);
         return Vec::new();
     }
-    let meta_data: TableMetadata = match bincode::deserialize(&read_meta_byte) {
+    let meta_data: Metadata = match bincode::deserialize(&read_meta_byte) {
         Ok(m) => m,
         Err(e) => {
             println!("Failed to deserialize metadata: {}", e);
