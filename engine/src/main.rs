@@ -1,78 +1,33 @@
 mod query_processor;
 mod storage;
 use query_processor::ast::Query;
-use query_processor::executor::execute_select;
+use query_processor::executor::{execute_select, execute_insert, execute_create};
 use query_processor::parser::Parser;
-use storage::disk::load_data;
-use storage::row::{DynamicField, Field, Row};
-use storage::table::Table;
 
 fn main() {
-    #[allow(dead_code)]
-    let mut table = Table::new(1, "updates".to_string(), 2);
-
-    let row1 = Row {
-        fields: vec![
-            Field {
-                name: "id".to_string(),
-                value: DynamicField::Integer(1),
-            },
-            Field {
-                name: "name".to_string(),
-                value: DynamicField::Text("Aromal".to_string()),
-            },
-        ],
-    };
-
-    let row2 = Row {
-        fields: vec![
-            Field {
-                name: "id".to_string(),
-                value: DynamicField::Integer(2),
-            },
-            Field {
-                name: "name".to_string(),
-                value: DynamicField::Text("Alice".to_string()),
-            },
-        ],
-    };
-
-    let row3 = Row {
-        fields: vec![
-            Field {
-                name: "id".to_string(),
-                value: DynamicField::Integer(3),
-            },
-            Field {
-                name: "name".to_string(),
-                value: DynamicField::Text("Bob".to_string()),
-            },
-        ],
-    };
-
-    table.insert_row(row1);
-    table.insert_row(row2);
-    table.insert_row(row3);
-
-    println!("Total rows in table: {}", table.get_num_rows());
-
-    println!("Number of pages in table: {}", table.get_num_pages());
-
-    for (i, page) in table.get_pages().iter().enumerate() {
-        println!("Page {} has {} rows", i, page.get_num_rows());
+    let create_sql = "CREATE TABLE test101 (id INTEGER, name TEXT)";
+    match Parser::parse(create_sql) {
+        Ok(Query::Create(create)) => {
+            match execute_create(&create) {
+                Ok(_) => println!("Table created: {}", create.statement.table_name),
+                Err(e) => println!("Create error: {}", e),
+            }
+        }
+        _ => {}
     }
 
-    table.save_to_disk();
-
-    let loaded_rows = load_data("updates");
-
-    println!("\n--- Loaded Data ---\n");
-    for row in loaded_rows.iter() {
-        println!("{:?}", row);
+    let insert_sql = "INSERT INTO test101 (id, name) VALUES (4, 'Carol')";
+    match Parser::parse(insert_sql) {
+        Ok(Query::Insert(insert)) => {
+            match execute_insert(&insert) {
+                Ok(_) => println!("Insert succeeded into {}", insert.table_name),
+                Err(e) => println!("Insert error: {}", e),
+            }
+        }
+        _ => {}
     }
-    println!("\n--- End of Data ---");
 
-    let sql = "SELECT id, name FROM hack WHERE id > 1";
+    let sql = "SELECT id, name FROM test101 WHERE id > 1";
 
     match Parser::parse(sql) {
         Ok(Query::Select(select)) => {
@@ -83,7 +38,7 @@ fn main() {
             }
             println!("--- End of Query Result ---");
         }
-        Ok(_) => println!("Only SELECT query is supported in this test."),
+        Ok(_) => println!("Only SELECT query is supported in this test101."),
         Err(e) => println!("Parse error: {}", e),
     }
 }
