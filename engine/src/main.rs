@@ -1,7 +1,11 @@
+mod query_processor;
 mod storage;
+use query_processor::ast::Query;
+use query_processor::executor::execute_select;
+use query_processor::parser::Parser;
+use storage::disk::load_data;
 use storage::row::{DynamicField, Field, Row};
 use storage::table::Table;
-use storage::disk::load_data;
 
 fn main() {
     #[allow(dead_code)]
@@ -58,13 +62,28 @@ fn main() {
         println!("Page {} has {} rows", i, page.get_num_rows());
     }
 
-    table.save_to_disk(); 
+    table.save_to_disk();
 
     let loaded_rows = load_data("updates");
-    
+
     println!("\n--- Loaded Data ---\n");
     for row in loaded_rows.iter() {
         println!("{:?}", row);
     }
     println!("\n--- End of Data ---");
+
+    let sql = "SELECT id, name FROM hack WHERE id > 1";
+
+    match Parser::parse(sql) {
+        Ok(Query::Select(select)) => {
+            let result_rows = execute_select(&select);
+            println!("--- Query Result ---");
+            for row in result_rows.iter() {
+                println!("{:?}", row);
+            }
+            println!("--- End of Query Result ---");
+        }
+        Ok(_) => println!("Only SELECT query is supported in this test."),
+        Err(e) => println!("Parse error: {}", e),
+    }
 }
