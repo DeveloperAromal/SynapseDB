@@ -1,4 +1,4 @@
-use crate::Row;
+use crate::storage::row::Row;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
