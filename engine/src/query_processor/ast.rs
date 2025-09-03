@@ -9,6 +9,11 @@ pub enum Query {
 }
 
 #[derive(Debug, PartialEq, Clone)]
+pub struct Create {
+    pub statement: CreateTable,
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct CreateTable {
     pub table_name: String,
     pub column: Vec<ColumnDefinition>,
@@ -18,8 +23,10 @@ pub struct CreateTable {
 pub struct ColumnDefinition {
     pub table_name: String,
     pub data_type: DataType,
+    pub name: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum DataType {
     Integer,
@@ -32,7 +39,7 @@ pub enum DataType {
 pub struct Insert {
     pub table_name: String,
     pub columns: Option<Vec<String>>,
-    pub value: Vec<Vec<DynamicField>>
+    pub value: Vec<Vec<DynamicField>>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -45,7 +52,7 @@ pub struct Select {
 #[derive(Debug, PartialEq, Clone)]
 pub enum SelectColumn {
     All,
-    Column(String)
+    Column(String),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -64,7 +71,6 @@ pub enum BinaryOperator {
     Gte,
     Lte,
 }
-
 
 impl Display for DataType {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
