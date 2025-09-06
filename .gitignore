@@ -14,6 +14,7 @@
 *.swp
 *.swo
 
+venv
 
 .vscode/
 *.code-workspace
@@ -35,15 +36,11 @@ desktop.ini
 /tmp_check_cli
 __pycache__/
 test_output/
-neon_previous/
 .vscode
 .idea
 *.swp
 tags
-neon.iml
-/.neon
-compaction-suite-results.*
-docker-compose/docker-compose-parallel.yml
+
 
 *.profraw
 *.profdata
@@ -56,6 +53,3 @@ docker-compose/docker-compose-parallel.yml
 *.pid
 
 *.list
-
-/proxy/.subzero
-local_proxy.json
