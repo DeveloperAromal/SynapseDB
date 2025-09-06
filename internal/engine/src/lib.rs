@@ -21,6 +21,7 @@ pub fn run_query(query: &str) -> String {
             let rows = execute_select(&select);
             format!("Rows: {:?}", rows)
         }
+        #[allow(dead_code)]
         Ok(_) => "Unsupported query".to_string(),
         Err(e) => format!("Parse error: {}", e),
     }

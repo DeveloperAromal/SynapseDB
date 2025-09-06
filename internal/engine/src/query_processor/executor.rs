@@ -44,7 +44,7 @@ pub fn execute_insert(insert: &Insert) -> Result<(), String> {
 
 pub fn execute_create(create: &Create) -> Result<(), String> {
     let table_name = &create.statement.table_name;
-    let dir_path = format!("src/storage/tables/{}", table_name);
+    let dir_path = format!("internal/engine/src/storage/tables/{}", table_name);
 
     if fs::metadata(&dir_path).is_ok() {
         return Err(format!("Table '{}' already exists", table_name));
@@ -67,7 +67,7 @@ pub fn execute_create(create: &Create) -> Result<(), String> {
 }
 
 fn read_metadata(table_name: &str) -> Option<Metadata> {
-    let meta_path = format!("src/storage/tables/{}/metadata.bin", table_name);
+    let meta_path = format!("internal/engine/src/storage/tables/{}/metadata.bin", table_name);
     let bytes = fs::read(meta_path).ok()?;
     bincode::deserialize::<Metadata>(&bytes).ok()
 }
