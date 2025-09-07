@@ -55,3 +55,4 @@ docker-compose/docker-compose-parallel.yml
 *.pid
 
 *.list
+.env
