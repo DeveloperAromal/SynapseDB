@@ -3,12 +3,9 @@
 *.a linguist-detectable=false
 *.o linguist-detectable=false
 
-# Ignore Go mod files
 go.mod linguist-detectable=false
 go.sum linguist-detectable=false
 
-# Ignore Makefile for language stats
 Makefile linguist-detectable=false
 
-# Explicitly force Rust detection
 *.rs linguist-language=Rust
