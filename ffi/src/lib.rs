@@ -20,3 +20,4 @@ pub extern "C" fn free_string(ptr: *mut c_char) {
         let _ = CString::from_raw(ptr);
     }
 }
+
