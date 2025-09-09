@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"fmt"
@@ -11,9 +11,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func main() {
+func Start() {
 	ln, err := net.Listen("tcp", ":4538")
-	
 	if err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
@@ -32,17 +31,14 @@ func main() {
 }
 
 func handleConnection(conn net.Conn) {
+	defer conn.Close()
+
 	err := godotenv.Load()
-
-
 	if err != nil {
 		log.Fatal("Error loading .env")
 	}
 
-	api_key := os.Getenv("OPENROUTER_API_KEY")
-
-
-	defer conn.Close()
+	apiKey := os.Getenv("OPENROUTER_API_KEY")
 
 	buf := make([]byte, 1024)
 	n, err := conn.Read(buf)
@@ -54,11 +50,7 @@ func handleConnection(conn net.Conn) {
 	raw := string(buf[:n])
 	fmt.Println("Received raw:", raw)
 
-	query, err := generateSql.GenerateSQL(
-		raw,
-		api_key,
-	)
-	
+	query, err := generateSql.GenerateSQL(raw, apiKey)
 	if err != nil {
 		log.Printf("SQL generation failed: %v", err)
 		conn.Write([]byte("Error: failed to generate SQL\n"))

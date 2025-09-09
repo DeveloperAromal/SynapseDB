@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 
 #[allow(dead_code)]
 pub fn load_data(table_name: &str) -> Vec<row::Row> {
-    let meta_path = format!("src/storage/tables/{}/metadata.bin", table_name);
+    let meta_path = format!("s3/tables/{}/metadata.bin", table_name);
     println!("{}", table_name);
 
     if !Path::new(&meta_path).exists() {
@@ -20,6 +20,7 @@ pub fn load_data(table_name: &str) -> Vec<row::Row> {
         println!("Metadata file is empty: {}", meta_path);
         return Vec::new();
     }
+    
     let meta_data: Metadata = match bincode::deserialize(&read_meta_byte) {
         Ok(m) => m,
         Err(e) => {
@@ -36,7 +37,7 @@ pub fn load_data(table_name: &str) -> Vec<row::Row> {
     let mut all_table_rows = Vec::new();
 
     for page_index in 0..meta_data.num_of_pages {
-        let page_path = format!("src/storage/tables/{}/page_{}.bin", table_name, page_index);
+        let page_path = format!("s3/tables/{}/page_{}.bin", table_name, page_index);
         let page_bytes = match fs::read(&page_path) {
             Ok(bytes) => bytes,
             Err(e) => {
