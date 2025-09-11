@@ -50,6 +50,3 @@ python test.py
 
 * Ensure you have **Go**, **Python 3**, and **Rust** installed.
 * The commit history on [GitHub](https://github.com/DeveloperAromal/SynapseDB) serves as proof of development, showing when the project was started, what changes were made, and by whom.
-
-Do you also want me to add a **diagram (architecture flow)** section in the README so it looks more professional?
-```
