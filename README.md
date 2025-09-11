@@ -5,7 +5,7 @@ It uses **DeepSeek NLP models** for natural language processing, **Rust** for hi
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Clone the Repository
 ```bash
@@ -25,7 +25,7 @@ cp .env.example .env
 
 ---
 
-## ▶️ Run the Project
+## Run the Project
 
 Start the backend server using Go:
 
@@ -35,7 +35,7 @@ go run main.go
 
 ---
 
-## 🧪 Run Tests
+## Run Tests
 
 Navigate to the `tests` folder and run:
 
