@@ -18,7 +18,6 @@ type Message struct {
 	Content string `json:"content"`
 }
 
-// OpenRouter response format
 type ChatResponse struct {
 	Choices []struct {
 		Message struct {
@@ -31,19 +30,19 @@ type ChatResponse struct {
 func promptTemplate(rawNaturalLanguage string) string {
 	return fmt.Sprintf(`You are an AI that converts English instructions into SQL queries.
 
-Rules:
-1. Only output the SQL query, no explanations.
-2. Use proper SQL syntax for SELECT, INSERT, UPDATE, DELETE, WHERE, JOIN, GROUP BY, etc.
-3. If the instruction is ambiguous, make a reasonable assumption based on common database practices.
+						Rules:
+							1. Only output the SQL query, no explanations.
+							2. Use proper SQL syntax for SELECT, INSERT, UPDATE, DELETE, WHERE, JOIN, GROUP BY, etc.
+							3. If the instruction is ambiguous, make a reasonable assumption based on common database practices.
 
-Examples:
-Input: "Show all employees"
-Output: SELECT * FROM employees;
+						Examples:
+							Input: "Show all employees"
+							Output: SELECT * FROM employees;
 
-Input: "Show the name and salary of all employees"
-Output: SELECT name, salary FROM employees;
+							Input: "Show the name and salary of all employees"
+							Output: SELECT name, salary FROM employees;
 
-Now, generate SQL for this instruction:
+							Now, generate SQL for this instruction:
 "%s"`, rawNaturalLanguage)
 }
 
@@ -72,6 +71,7 @@ func GenerateSQL(rawNaturalLanguage, apiKey string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	defer resp.Body.Close()
 
 	rawResp, _ := ioutil.ReadAll(resp.Body)

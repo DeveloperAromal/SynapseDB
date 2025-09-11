@@ -2,6 +2,7 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use engine::run_query;
 
+
 #[no_mangle]
 pub extern "C" fn execute_sql(sql: *const c_char) -> *mut c_char{
     let c_char = unsafe {CStr::from_ptr(sql)};
