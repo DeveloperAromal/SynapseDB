@@ -1,12 +1,55 @@
 # SynapseDB
 
-**SynapseDB** is a hybrid database engine combining the performance of Rust with the concurrency strengths of Go. It aims to deliver a fast, reliable, and scalable system for modern data workloads.
-
->  This project is currently **under active development**. Features and structure may change rapidly.
-
-
-## Project Status
-
-SynapseDB is in its early stages. Key components like the storage engine (Rust), networking layer (Go), and language glue via cgo/FFI are currently being designed and implemented. This repository is experimental and not yet ready for production use.
+SynapseDB is an intelligent database query system that allows users to interact with databases using simple English sentences instead of writing SQL.  
+It uses **DeepSeek NLP models** for natural language processing, **Rust** for high-performance query handling, and **Golang** for scalable backend services.  
 
 ---
+
+## 🚀 Getting Started
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/DeveloperAromal/SynapseDB.git
+cd SynapseDB
+````
+
+### 2. Setup Environment
+
+* Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+* Open `.env` and add your **OpenRouter API Key**.
+
+---
+
+## ▶️ Run the Project
+
+Start the backend server using Go:
+
+```bash
+go run main.go
+```
+
+---
+
+## 🧪 Run Tests
+
+Navigate to the `tests` folder and run:
+
+```bash
+cd tests
+python test.py
+```
+
+---
+
+## Notes
+
+* Ensure you have **Go**, **Python 3**, and **Rust** installed.
+* The commit history on [GitHub](https://github.com/DeveloperAromal/SynapseDB) serves as proof of development, showing when the project was started, what changes were made, and by whom.
+
+Do you also want me to add a **diagram (architecture flow)** section in the README so it looks more professional?
+```
