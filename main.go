@@ -1,12 +1,15 @@
 package main
 
 import( 
-	"fmt"
-
 	"github.com/DeveloperAromal/SynapseDB/api"
+	"github.com/DeveloperAromal/SynapseDB/cmd/server"
 )
 
 func main() {
-	fmt.Println("Server started")
-	server.Start()
+
+	go func() {
+		server.Start()
+	}()
+	
+	shell.Runshell()
 }
