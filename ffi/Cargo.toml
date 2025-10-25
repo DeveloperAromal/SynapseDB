@@ -1,0 +1,13 @@
+[package]
+name = "synapsedb_ffi"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "engine"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+
+[dependencies]
+engine = { path = "../internal/engine" }
