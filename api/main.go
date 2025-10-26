@@ -1,4 +1,4 @@
-package server
+package api
 
 import (
 	"fmt"
@@ -11,14 +11,16 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func Start() {
+func Start(ready chan<- struct{}) {
 	ln, err := net.Listen("tcp", ":4538")
 	if err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
-	defer ln.Close()
+	if ready != nil {
+		close(ready)
+	}
 
-	fmt.Println("TCP server started on port 4538")
+	defer ln.Close()
 
 	for {
 		conn, err := ln.Accept()
@@ -39,6 +41,7 @@ func handleConnection(conn net.Conn) {
 	}
 
 	apiKey := os.Getenv("OPENROUTER_API_KEY")
+	model := os.Getenv("MODEL")
 
 	buf := make([]byte, 1024)
 	n, err := conn.Read(buf)
@@ -48,12 +51,12 @@ func handleConnection(conn net.Conn) {
 	}
 
 	raw := string(buf[:n])
-	fmt.Println("Received raw:", raw)
 
-	query, err := generateSql.GenerateSQL(raw, apiKey)
+	query, err := generateSql.GenerateSQL(raw, apiKey, model)
 	if err != nil {
 		log.Printf("SQL generation failed: %v", err)
-		conn.Write([]byte("Error: failed to generate SQL\n"))
+		// send the detailed error back to the client so the shell shows the underlying API error
+		_, _ = conn.Write([]byte("Error: " + err.Error() + "\n"))
 		return
 	}
 

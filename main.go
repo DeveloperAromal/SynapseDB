@@ -1,15 +1,15 @@
 package main
 
-import( 
-	"github.com/DeveloperAromal/SynapseDB/api"
-	"github.com/DeveloperAromal/SynapseDB/cmd/server"
+import (
+	api "github.com/DeveloperAromal/SynapseDB/api"
+	shell "github.com/DeveloperAromal/SynapseDB/cmd/server"
 )
 
 func main() {
 
-	go func() {
-		server.Start()
-	}()
-	
+	ready := make(chan struct{})
+	go api.Start(ready)
+	<-ready
+
 	shell.Runshell()
 }

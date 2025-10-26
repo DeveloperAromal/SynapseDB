@@ -1,12 +1,14 @@
 package generateSql
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-)
+			"bytes"
+			"encoding/json"
+			"fmt"
+			"io/ioutil"
+			"net/http"
+			"os"
+			"strings"
+		)
 
 type ChatRequest struct {
 	Model    string    `json:"model"`
@@ -46,11 +48,15 @@ func promptTemplate(rawNaturalLanguage string) string {
 "%s"`, rawNaturalLanguage)
 }
 
-func GenerateSQL(rawNaturalLanguage, apiKey string) (string, error) {
+func GenerateSQL(rawNaturalLanguage, apiKey string, model string) (string, error) {
 	baseURL := "https://openrouter.ai/api/v1/chat/completions"
 
+	if model == "" {
+		model = "deepseek/deepseek-r1-0528:free"
+	}
+
 	requestBody := ChatRequest{
-		Model: "deepseek/deepseek-chat-v3.1:free",
+		Model: model,
 		Messages: []Message{
 			{Role: "user", Content: promptTemplate(rawNaturalLanguage)},
 		},
@@ -65,6 +71,13 @@ func GenerateSQL(rawNaturalLanguage, apiKey string) (string, error) {
 
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 	req.Header.Set("Content-Type", "application/json")
+	// Optional OpenRouter headers: HTTP-Referer and X-Title (read from env if present)
+	if ref := os.Getenv("OPENROUTER_REFERER"); ref != "" {
+		req.Header.Set("HTTP-Referer", ref)
+	}
+	if title := os.Getenv("OPENROUTER_TITLE"); title != "" {
+		req.Header.Set("X-Title", title)
+	}
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -75,6 +88,16 @@ func GenerateSQL(rawNaturalLanguage, apiKey string) (string, error) {
 	defer resp.Body.Close()
 
 	rawResp, _ := ioutil.ReadAll(resp.Body)
+
+	// surface non-2xx responses and non-JSON bodies (helps with OpenRouter privacy pages)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("non-2xx response: %d | body: %s", resp.StatusCode, string(rawResp))
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	if contentType == "" || !strings.Contains(strings.ToLower(contentType), "application/json") {
+		return "", fmt.Errorf("unexpected content-type: %s | body: %s", contentType, string(rawResp))
+	}
 
 	var response ChatResponse
 	if err := json.Unmarshal(rawResp, &response); err != nil {
