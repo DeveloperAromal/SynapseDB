@@ -71,7 +71,7 @@ func GenerateSQL(rawNaturalLanguage, apiKey string, model string) (string, error
 
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 	req.Header.Set("Content-Type", "application/json")
-	// Optional OpenRouter headers: HTTP-Referer and X-Title (read from env if present)
+	
 	if ref := os.Getenv("OPENROUTER_REFERER"); ref != "" {
 		req.Header.Set("HTTP-Referer", ref)
 	}
