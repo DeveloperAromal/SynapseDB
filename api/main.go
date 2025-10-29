@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"os"
@@ -55,13 +54,11 @@ func handleConnection(conn net.Conn) {
 	query, err := generateSql.GenerateSQL(raw, apiKey, model)
 	if err != nil {
 		log.Printf("SQL generation failed: %v", err)
-		// send the detailed error back to the client so the shell shows the underlying API error
 		_, _ = conn.Write([]byte("Error: " + err.Error() + "\n"))
 		return
 	}
 
 	result := executor.Execute(query)
-	fmt.Println("Execution result:", result)
 
 	_, err = conn.Write([]byte(result + "\n"))
 	if err != nil {

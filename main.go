@@ -2,7 +2,7 @@ package main
 
 import (
 	api "github.com/DeveloperAromal/SynapseDB/api"
-	shell "github.com/DeveloperAromal/SynapseDB/cmd/server"
+	shell "github.com/DeveloperAromal/SynapseDB/cmd/shell"
 )
 
 func main() {
