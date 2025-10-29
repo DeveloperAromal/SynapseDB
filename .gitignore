@@ -60,3 +60,5 @@ docker-compose/docker-compose-parallel.yml
 
 *.list
 .env
+
+/target

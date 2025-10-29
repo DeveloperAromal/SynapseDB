@@ -1,9 +1,11 @@
 package shell
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"strings"
 	"time"
 )
@@ -12,12 +14,11 @@ func Runshell() {
 	host := "127.0.0.1"
 	port := "4538"
 
-	// Banner
-	fmt.Printf("\033[34m")
+	fmt.Printf("\033[38;5;208m")
 	fmt.Println("======================================================")
 	fmt.Println("-------------------- Synapse Shell -------------------")
 	fmt.Println("======================================================")
-	fmt.Printf("\033[0m")
+	fmt.Printf("\033[0m\n")
 
 	addr := net.JoinHostPort(host, port)
 
@@ -39,10 +40,20 @@ func Runshell() {
 
 	fmt.Println("Type \033[33mexit\033[0m to close the shell.")
 
+	reader := bufio.NewReader(os.Stdin)
+
 	for {
 		fmt.Print("\033[32m$> \033[0m")
-		var query string
-		fmt.Scanln(&query)
+		query, err := reader.ReadString('\n')
+
+		if err != nil {
+			log.Println("Read error:", err)
+			continue
+		}
+		
+		query = strings.TrimSpace(query)
+		query = strings.ToLower(query)
+		
 
 		if strings.ToLower(query) == "exit" {
 			fmt.Println("\033[31mClosing Synapse Shell...\033[0m")
