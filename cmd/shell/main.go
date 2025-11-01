@@ -43,7 +43,7 @@ func Runshell() {
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
-		fmt.Print("\033[32m$> \033[0m")
+		fmt.Print("\033[32m~> \033[0m")
 		query, err := reader.ReadString('\n')
 
 		if err != nil {
