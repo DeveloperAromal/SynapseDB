@@ -38,12 +38,12 @@ func Runshell() {
 	}
 	defer conn.Close()
 
-	fmt.Println("Type \033[33mexit\033[0m to close the shell.")
+	fmt.Print("Type \033[33mexit\033[0m to close the shell.\n")
 
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
-		fmt.Print("\033[32m$> \033[0m")
+		fmt.Print("\033[32m~> \033[0m")
 		query, err := reader.ReadString('\n')
 
 		if err != nil {
