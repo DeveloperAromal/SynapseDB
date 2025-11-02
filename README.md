@@ -261,6 +261,7 @@ Received: SELECT * FROM users;
 ~> exit
 Closing Synapse Shell...
 ```
+<img width="1919" height="1021" alt="Screenshot 2025-10-29 155222" src="https://github.com/user-attachments/assets/df9cf58f-1e24-4086-86a9-aa264775f080" />
 
 ### Natural Language Queries
 
