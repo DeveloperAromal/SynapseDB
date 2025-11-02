@@ -14,7 +14,7 @@
 *.swp
 *.swo
 
-
+venv
 .vscode/
 *.code-workspace
 
@@ -40,8 +40,11 @@ neon_previous/
 .idea
 *.swp
 tags
-neon.iml
-/.neon
+
+/target
+ffi/target
+
+
 compaction-suite-results.*
 docker-compose/docker-compose-parallel.yml
 
@@ -56,6 +59,6 @@ docker-compose/docker-compose-parallel.yml
 *.pid
 
 *.list
+.env
 
-/proxy/.subzero
-local_proxy.json
+/target
