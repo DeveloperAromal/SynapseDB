@@ -292,7 +292,8 @@ import socket
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect(('localhost', 4538))
-sock.send(b'show all users')
+query = "show all users in user table" # Your query in plain english
+sock.send(query)
 response = sock.recv(4096)
 print(response.decode())
 sock.close()
