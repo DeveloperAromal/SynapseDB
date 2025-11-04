@@ -106,12 +106,11 @@ SynapseDB/
 │               ├── page.rs     # Page data structure
 │               ├── row.rs      # Row data structure
 │               └── table.rs    # Table management
-├── src/                         # Data storage directory
-│   └── storage/
-│       └── tables/             # Persistent table data
-│           └── users/          # Example table storage
-│               ├── metadata.bin # Table metadata
-│               └── page_0.bin  # Page data files
+├── synstore/                    # Data storage directory (runtime-generated)
+│   └── tables/                 # Persistent table data
+│       └── users/              # Example table storage
+│           ├── metadata.bin    # Table metadata
+│           └── page_0.bin      # Page data files
 ├── tests/                       # Test files
 │   └── test.py                 # Python test suite
 ├── main.go                      # Application entry point
@@ -338,7 +337,7 @@ python tests/test.py
 - No indexing or query optimization
 - Windows-focused build configuration (may require adjustments for other platforms)
 
-## License
+ ## License
 
 [MIT License](https://github.com/DeveloperAromal/SynapseDB/blob/main/LICENSE)
 

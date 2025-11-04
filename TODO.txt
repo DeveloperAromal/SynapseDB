@@ -1,0 +1,6 @@
+cd D:\personal-projects\SynapseDB\ffi
+cargo build --release --target x86_64-pc-windows-msvc
+
+
+Copy-Item -Force D:\personal-projects\SynapseDB\ffi\target\x86_64-pc-windows-msvc\release\engine.dll D:\personal-projects\SynapseDB\engine.dll
+Copy-Item -Force D:\personal-projects\SynapseDB\ffi\target\x86_64-pc-windows-msvc\release\engine.dll D:\personal-projects\SynapseDB\api\execute\engine.dll

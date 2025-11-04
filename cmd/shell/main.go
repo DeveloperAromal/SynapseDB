@@ -50,10 +50,9 @@ func Runshell() {
 			log.Println("Read error:", err)
 			continue
 		}
-		
+
 		query = strings.TrimSpace(query)
 		query = strings.ToLower(query)
-		
 
 		if strings.ToLower(query) == "exit" {
 			fmt.Println("\033[31mClosing Synapse Shell...\033[0m")
@@ -85,8 +84,20 @@ func Runshell() {
 		}
 
 		end := time.Now()
-		fmt.Printf("\n\033[36mLatency:\033[0m ~%dms\n", end.Sub(start).Milliseconds())
-		fmt.Printf("\033[33mReceived:\033[0m %s\n\n", string(buffer[:n]))
+		fmt.Printf("\033[33mReceived:\n\033[0m \n\n")
+
+		output := string(buffer[:n])
+
+		output = strings.ReplaceAll(output, "+", "\033[90m+\033[0m")                     
+		output = strings.ReplaceAll(output, "|", "\033[90m|\033[0m")                  
+		output = strings.ReplaceAll(output, "id", "\033[96mid\033[0m")                   
+		output = strings.ReplaceAll(output, "name", "\033[96mname\033[0m")               
+		output = strings.ReplaceAll(output, "rows in set", "\033[93mrows in set\033[0m") 
+
+		fmt.Printf("%s\n", output)
+
+		fmt.Printf("\n\033[36mLatency:\033[0m ~ %dms\n", end.Sub(start).Milliseconds())
+
 	}
 
 }

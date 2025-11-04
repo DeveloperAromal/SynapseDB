@@ -4,7 +4,13 @@ use crate::storage::row::{DynamicField, Row, Field};
 use crate::storage::table::{Metadata, Table};
 use std::fs;
 
-pub fn execute_select(select: &Select) -> Vec<Vec<DynamicField>> {
+#[derive(Debug, Clone)]
+pub struct SelectResult {
+    pub headers: Vec<String>,
+    pub rows: Vec<Vec<DynamicField>>,
+}
+
+pub fn execute_select(select: &Select) -> SelectResult {
     let rows = load_data(&select.table_name);
 
     let filtered_rows: Vec<_> = if let Some(expr) = &select.where_clause {
@@ -15,10 +21,29 @@ pub fn execute_select(select: &Select) -> Vec<Vec<DynamicField>> {
         rows
     };
 
-    filtered_rows
+    let headers: Vec<String> = match select.columns.as_slice() {
+        [SelectColumn::All] => {
+            filtered_rows
+                .get(0)
+                .map(|r| r.fields.iter().map(|f| f.name.clone()).collect())
+                .unwrap_or_default()
+        }
+        _ => select
+            .columns
+            .iter()
+            .filter_map(|c| match c {
+                SelectColumn::Column(name) => Some(name.clone()),
+                SelectColumn::All => None,
+            })
+            .collect(),
+    };
+
+    let data_rows: Vec<Vec<DynamicField>> = filtered_rows
         .into_iter()
         .map(|row| select_columns(&row, &select.columns))
-        .collect()
+        .collect();
+
+    SelectResult { headers, rows: data_rows }
 }
 
 pub fn execute_insert(insert: &Insert) -> Result<(), String> {
@@ -44,7 +69,7 @@ pub fn execute_insert(insert: &Insert) -> Result<(), String> {
 
 pub fn execute_create(create: &Create) -> Result<(), String> {
     let table_name = &create.statement.table_name;
-    let dir_path = format!("s3/tables/{}", table_name);
+    let dir_path = format!("synstore/tables/{}", table_name);
 
     if fs::metadata(&dir_path).is_ok() {
         return Err(format!("Table '{}' already exists", table_name));
@@ -67,7 +92,7 @@ pub fn execute_create(create: &Create) -> Result<(), String> {
 }
 
 fn read_metadata(table_name: &str) -> Option<Metadata> {
-    let meta_path = format!("s3/tables/{}/metadata.bin", table_name);
+    let meta_path = format!("synstore/tables/{}/metadata.bin", table_name);
     let bytes = fs::read(meta_path).ok()?;
     bincode::deserialize::<Metadata>(&bytes).ok()
 }
