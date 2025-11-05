@@ -1,4 +1,4 @@
-/target/
+target/
 **/*.rs.bk
 
 **/*.exe
@@ -62,3 +62,8 @@ docker-compose/docker-compose-parallel.yml
 .env
 
 /target
+target
+
+/ffi/target
+ffi/target
+
