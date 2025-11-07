@@ -260,6 +260,7 @@ Received: SELECT * FROM users;
 ~> exit
 Closing Synapse Shell...
 ```
+<img width="1919" height="1021" alt="Screenshot 2025-10-29 155222" src="https://github.com/user-attachments/assets/df9cf58f-1e24-4086-86a9-aa264775f080" />
 
 ### Natural Language Queries
 
@@ -290,7 +291,8 @@ import socket
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect(('localhost', 4538))
-sock.send(b'show all users')
+query = "show all users in user table" # Your query in plain english
+sock.send(query)
 response = sock.recv(4096)
 print(response.decode())
 sock.close()
