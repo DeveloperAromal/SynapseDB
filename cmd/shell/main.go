@@ -1,24 +1,21 @@
 package shell
 
 import (
-	"bufio"
-	"fmt"
-	"log"
-	"net"
-	"os"
-	"strings"
-	"time"
-)
+			"bufio"
+			"fmt"
+			"log"
+			"net"
+			"os"
+			"strings"
+			"time"
+			 banner "github.com/DeveloperAromal/SynapseDB/cmd/security/utils"
+		)
 
 func Runshell() {
 	host := "127.0.0.1"
 	port := "4538"
 
-	fmt.Printf("\033[38;5;208m")
-	fmt.Println("======================================================")
-	fmt.Println("-------------------- Synapse Shell -------------------")
-	fmt.Println("======================================================")
-	fmt.Printf("\033[0m\n")
+	banner.NShell_banner()
 
 	addr := net.JoinHostPort(host, port)
 

@@ -1,15 +1,14 @@
 package generateSql
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"os"
-	"strings"
-	"time"
-)
+			"bytes"
+			"encoding/json"
+			"fmt"
+			"io/ioutil"
+			"net/http"
+			"os"
+			"strings"
+		)
 
 type ChatRequest struct {
 	Model    string    `json:"model"`
@@ -31,40 +30,29 @@ type ChatResponse struct {
 }
 
 func promptTemplate(rawNaturalLanguage string) string {
-	return fmt.Sprintf(`You are an AI SQL generator. 
-						Your job: Convert natural English instructions into **only SQL queries**.
+	return fmt.Sprintf(`You are an AI that converts English instructions into SQL queries.
 
-						### RULES
-							1. Output ONLY a valid SQL query — no explanations, no extra words, no apologies.
-							2. Use proper SQL syntax (SELECT, INSERT, UPDATE, DELETE, WHERE, JOIN, etc.).
-							3. If the instruction is ambiguous, make a reasonable assumption.
-							4. NEVER include markdown formatting, explanations, or natural language text.
+						Rules:
+							1. Only output the SQL query, no explanations.
+							2. Use proper SQL syntax for SELECT, INSERT, UPDATE, DELETE, WHERE, JOIN, GROUP BY, etc.
+							3. If the instruction is ambiguous, make a reasonable assumption based on common database practices.
 
-						### Examples
-							Instruction: "Show all employees"
-							SQL: SELECT * FROM employees;
+						Examples:
+							Input: "Show all employees"
+							Output: SELECT * FROM employees;
 
-							Instruction: "Show the name and salary of all employees"
-							SQL: SELECT name, salary FROM employees;
+							Input: "Show the name and salary of all employees"
+							Output: SELECT name, salary FROM employees;
 
-							Instruction: "Add a user named John"
-							SQL: INSERT INTO users (name) VALUES ('John');
-
-							### Instruction:
-							"%s"
-
-							Now output ONLY the SQL query:`, rawNaturalLanguage)
-}
-
-var client = &http.Client{
-	Timeout: 15 * time.Second,
+							Now, generate SQL for this instruction:
+"%s"`, rawNaturalLanguage)
 }
 
 func GenerateSQL(rawNaturalLanguage, apiKey string, model string) (string, error) {
 	baseURL := "https://openrouter.ai/api/v1/chat/completions"
 
 	if model == "" {
-		model = "meta-llama/llama-3.1-8b-instruct:free"
+		model = "deepseek/deepseek-r1-0528:free"
 	}
 
 	requestBody := ChatRequest{
@@ -83,7 +71,7 @@ func GenerateSQL(rawNaturalLanguage, apiKey string, model string) (string, error
 
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 	req.Header.Set("Content-Type", "application/json")
-
+	
 	if ref := os.Getenv("OPENROUTER_REFERER"); ref != "" {
 		req.Header.Set("HTTP-Referer", ref)
 	}
@@ -91,14 +79,17 @@ func GenerateSQL(rawNaturalLanguage, apiKey string, model string) (string, error
 		req.Header.Set("X-Title", title)
 	}
 
+	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("request failed: %v", err)
+		return "", err
 	}
+
 	defer resp.Body.Close()
 
 	rawResp, _ := ioutil.ReadAll(resp.Body)
 
+	// surface non-2xx responses and non-JSON bodies (helps with OpenRouter privacy pages)
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return "", fmt.Errorf("non-2xx response: %d | body: %s", resp.StatusCode, string(rawResp))
 	}
@@ -110,44 +101,12 @@ func GenerateSQL(rawNaturalLanguage, apiKey string, model string) (string, error
 
 	var response ChatResponse
 	if err := json.Unmarshal(rawResp, &response); err != nil {
-		return "", fmt.Errorf("failed to decode response: %v | raw: %s", err, string(rawResp))
+		return "", fmt.Errorf("failed to decode: %v | raw: %s", err, string(rawResp))
 	}
 
 	if len(response.Choices) == 0 {
 		return "", fmt.Errorf("no choices returned from model | raw: %s", string(rawResp))
 	}
 
-	sqlOutput := cleanSQL(response.Choices[0].Message.Content)
-
-	if sqlOutput == "" {
-		return "", fmt.Errorf("empty SQL output | raw: %s", string(rawResp))
-	}
-
-	return sqlOutput, nil
-}
-
-func cleanSQL(output string) string {
-	sql := strings.TrimSpace(output)
-	sql = strings.ReplaceAll(sql, "```sql", "")
-	sql = strings.ReplaceAll(sql, "```", "")
-	sql = strings.ReplaceAll(sql, "`", "")
-	sql = strings.TrimSpace(sql)
-
-	if strings.Contains(strings.ToLower(sql), "sorry") ||
-		strings.Contains(strings.ToLower(sql), "apologize") ||
-		strings.Contains(strings.ToLower(sql), "please") ||
-		strings.Contains(strings.ToLower(sql), "instruction") ||
-		strings.Contains(strings.ToLower(sql), "clarify") {
-		return ""
-	}
-
-	validPrefixes := []string{"select", "insert", "update", "delete", "create", "drop"}
-	sqlLower := strings.ToLower(sql)
-	for _, prefix := range validPrefixes {
-		if strings.HasPrefix(sqlLower, prefix) {
-			return sql
-		}
-	}
-
-	return ""
+	return response.Choices[0].Message.Content, nil
 }
