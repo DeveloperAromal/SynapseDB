@@ -3,7 +3,7 @@ package security
 import (
 			"os"
 			"strconv"
-			binConverter "github.com/DeveloperAromal/SynapseDB/cmd/security/utils"
+			binConverter "github.com/DeveloperAromal/SynapseDB/cmd/utils"
 	   )
 
 func IfPathExists(path string) bool{ 

@@ -1,32 +1,16 @@
-// package main
-
-// import (
-// 	api "github.com/DeveloperAromal/SynapseDB/api"
-// 	shell "github.com/DeveloperAromal/SynapseDB/cmd/shell"
-// )
-
-// func main() {
-
-// 	ready := make(chan struct{})
-// 	go api.Start(ready)
-// 	<-ready
-
-// 	shell.Runshell()
-// }
-
-
 package main
 
 import (
-	"fmt"
-
-	background_check "github.com/DeveloperAromal/SynapseDB/cmd/security"
-	banner "github.com/DeveloperAromal/SynapseDB/cmd/security/utils"
+	api "github.com/DeveloperAromal/SynapseDB/api"
+	shell "github.com/DeveloperAromal/SynapseDB/cmd/shell"
 )
 
 func main() {
-	banner.NShell_NewUserBanner()
-	fmt.Print(background_check.CheckInitialRequirements("synstore/keys/master.keys.bin"))
-	fmt.Print(background_check.CheckInitialRequirements("snstore/keys/master.eys.bin"))
 
+	ready := make(chan struct{})
+	go api.Start(ready)
+	<-ready
+
+	shell.Runshell()
 }
+
