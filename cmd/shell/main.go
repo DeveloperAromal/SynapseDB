@@ -8,14 +8,31 @@ import (
 			"os"
 			"strings"
 			"time"
-			 banner "github.com/DeveloperAromal/SynapseDB/cmd/security/utils"
+			 banner "github.com/DeveloperAromal/SynapseDB/cmd/utils/banner"
+			 startup "github.com/DeveloperAromal/SynapseDB/cmd/security"
+			 validate "github.com/DeveloperAromal/SynapseDB/cmd/utils/auth/login"
 		)
 
 func Runshell() {
+
+isNewUser := startup.StartUp()
+
+	if !isNewUser {
+		banner.NShell_banner()
+
+		isValid := validate.ValidateUser()
+		if !isValid {
+			fmt.Println("Invalid username or password.")
+			return
+		}
+
+		time.Sleep(700 * time.Millisecond)
+	}
+	
+
 	host := "127.0.0.1"
 	port := "4538"
 
-	banner.NShell_banner()
 
 	addr := net.JoinHostPort(host, port)
 
@@ -40,7 +57,7 @@ func Runshell() {
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
-		fmt.Print("\033[32m~> \033[0m")
+		fmt.Print("\033[32m$ \033[0m")
 		query, err := reader.ReadString('\n')
 
 		if err != nil {
