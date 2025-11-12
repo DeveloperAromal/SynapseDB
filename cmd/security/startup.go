@@ -1,6 +1,7 @@
 package security
 
 import (
+	"encoding/base64"
 	"fmt"
 
 	encryption "github.com/DeveloperAromal/SynapseDB/cmd/utils/auth/encryption"
@@ -24,11 +25,14 @@ func StartUp() bool {
 			panic(err)
 		}
 
-		key_contents := fmt.Sprintf(`USERNAME=%s 
-						 PASSWORD=%s
-						`, username, hashed_password)
+		key_contents := fmt.Sprintf(`
+				USERNAME=%s
+				PASSWORD=%s`, 
+				username, hashed_password)
 
-		file.CreateBin(key_contents)
+		encode := base64.StdEncoding.EncodeToString([]byte(key_contents))
+		
+		file.CreateBin(encode)
 
 		return true
 

@@ -1,6 +1,7 @@
 package login
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -40,10 +41,10 @@ func ValidateUser() bool {
 
 	const filePath = "synstore/keys/master.keys.bin"
 
-	contents := file.ReadBin(filePath)
+	contents, _ := base64.StdEncoding.DecodeString(file.ReadBin(filePath))
 
+	bin_hash_pass, err := GetPassword(string(contents))
 
-	bin_hash_pass, err := GetPassword(contents)
 	if err != nil {
 		panic(err)
 	}
