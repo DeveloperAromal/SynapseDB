@@ -1,7 +1,7 @@
 package executor
 
 /*
-#cgo LDFLAGS: -L../../ffi/target/x86_64-pc-windows-msvc/release -lengine
+#cgo LDFLAGS: -L../../ffi/target/x86_64-pc-windows-gnu/release -lengine
 #include <stdlib.h>
 
 extern char* execute_sql(const char* sql);
