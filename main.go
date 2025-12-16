@@ -12,5 +12,5 @@ func main() {
 	<-ready
 
 	shell.Runshell()
-}
 
+}

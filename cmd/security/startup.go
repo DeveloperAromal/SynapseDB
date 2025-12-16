@@ -1,7 +1,7 @@
 package security
 
 import (
-	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
 	encryption "github.com/DeveloperAromal/SynapseDB/cmd/utils/auth/encryption"
@@ -10,6 +10,11 @@ import (
 	banner "github.com/DeveloperAromal/SynapseDB/cmd/utils/banner"
 	file "github.com/DeveloperAromal/SynapseDB/cmd/utils/file"
 )
+
+type Credentials struct {
+	Username string `json:"USERNAME"`
+	Password string `json:"PASSWORD"`
+}
 
 func StartUp() bool {
 	const filePath = "synstore/keys/master.keys.bin"
@@ -25,14 +30,19 @@ func StartUp() bool {
 			panic(err)
 		}
 
-		key_contents := fmt.Sprintf(`
-				USERNAME=%s
-				PASSWORD=%s`, 
-				username, hashed_password)
+		creds := Credentials{
+			Username: username,
+			Password: hashed_password,
+		}
 
-		encode := base64.StdEncoding.EncodeToString([]byte(key_contents))
-		
-		file.CreateBin(encode)
+		jsonData, err := json.Marshal(creds)
+		if err != nil {
+			fmt.Println("Error marshalling to JSON:", err)
+			panic(err)
+		}
+
+		json_output := string(jsonData)
+		file.CreateBin(json_output)
 
 		return true
 

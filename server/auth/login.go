@@ -4,12 +4,10 @@ import (
 	"encoding/json" 
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
-	encryption "github.com/DeveloperAromal/SynapseDB/cmd/utils/auth/encryption"
+	encryption "github.com/DeveloperAromal/SynapseDB/server/auth/encryption"
 	file "github.com/DeveloperAromal/SynapseDB/cmd/utils/file"
-	"golang.org/x/term"
 )
 
 type Credentials struct {
@@ -50,12 +48,16 @@ func GetPassword(keyContents string) (string, error) {
 	return creds.Password, nil
 }
 
-func ValidateUser() bool {
-	fmt.Print("Enter your password: ")
-	bytePassword, _ := term.ReadPassword(int(os.Stdin.Fd()))
-	fmt.Print()
-	password := strings.TrimSpace(string(bytePassword))
-	fmt.Println("")
+func GetUsername(keyContents string) (string, error) {
+	const filePath = "synstore/keys/master.keys.bin"
+    
+	creds, err := readAndParseCredentials(filePath)
+	if err != nil {
+		return "", errors.New("USERNAME not found") 
+	}
+	return creds.Username, nil
+}
+func ValidateUser(password string, username string) (bool, bool) {
 
 
 	bin_hash_pass, err := GetPassword("") 
@@ -63,7 +65,8 @@ func ValidateUser() bool {
 		panic(err)
 	}
 
-	isValidUser := encryption.ValidateHash(password, bin_hash_pass)
+	isValidUsername := encryption.ValidateHash(password, bin_hash_pass)
+	isValidPassword := encryption.ValidateHash(password, bin_hash_pass)
 
-	return isValidUser
+	return isValidPassword, isValidUsername
 }
