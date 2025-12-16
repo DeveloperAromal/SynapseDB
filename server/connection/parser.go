@@ -1,4 +1,4 @@
-package connecton
+package connection
 
 import (
 	"errors"
