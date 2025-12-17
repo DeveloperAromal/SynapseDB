@@ -19,11 +19,11 @@ func parseUrl(connStr string) (*ConnInfo, error) {
 	u, err := url.Parse(connStr)
 
 	if err != nil {
-		return nil, errors.New("Invalid Connection String")
+		return nil, errors.New("invalid connection string")
 	}
 
 	if u.User != nil {
-		return nil, errors.New("Missing Credentials")
+		return nil, errors.New("missing credentials")
 
 	}
 	username := u.User.Username()
