@@ -1,5 +1,9 @@
 package connection
 
+import (
+	auth "github.com/DeveloperAromal/SynapseDB/server/auth"
+)
+
 type ConnStr struct {
 	Username string
 	Password string
@@ -8,11 +12,15 @@ type ConnStr struct {
 	SSL      string
 }
 
-func ValidateParsedValue(*ConnStr, error) (bool){
-	
-	
+func ValidateParsedValue(conn *ConnStr) bool {
+	validatePassword, validateUsername := auth.ValidateUser(
+		conn.Password,
+		conn.Username,
+	)
 
+	if validatePassword && validateUsername {
+		return true
+	}
 
-
-	return  true
+	return false
 }
