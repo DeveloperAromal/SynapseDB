@@ -1,7 +1,7 @@
+use super::ast::*;
 use crate::query_processor::tokenizer;
 use crate::storage::row::DynamicField;
-use super::ast::*;
-
+use crate::storage::schema::Schema;
 pub struct Parser {
     tokens: Vec<String>,
     position: usize,
@@ -41,6 +41,7 @@ impl Parser {
             Some("SELECT") => parser.parse_select(),
             Some("INSERT") => parser.parse_insert(),
             Some("CREATE") => parser.parse_create(),
+            // Some("SWITCH") => parser.parse_switch(),
             Some(t) => Err(format!("Unknown query type '{}'", t)),
             None => Err("Empty query".to_string()),
         }
@@ -60,7 +61,7 @@ impl Parser {
                 if self.peek().map(|s| s.as_str()) != Some(",") {
                     break;
                 }
-                self.next(); 
+                self.next();
             }
         }
 
@@ -85,7 +86,7 @@ impl Parser {
         self.expect("INSERT")?;
         self.expect("INTO")?;
         let table_name = self.next().ok_or("Expected table name after 'INTO'")?;
-        
+
         let mut columns = None;
         if self.peek().map(|s| s.as_str()) == Some("(") {
             self.next();
@@ -104,7 +105,7 @@ impl Parser {
 
         self.expect("VALUES")?;
         self.expect("(")?;
-        
+
         let mut values = Vec::new();
         loop {
             let val = self.next().ok_or("Expected value")?;
@@ -120,12 +121,20 @@ impl Parser {
                 }
             }
         }
-        
+
         Ok(Query::Insert(Insert {
             table_name,
             columns,
-            value: vec![values], 
+            value: vec![values],
         }))
+    }
+
+    pub fn parse_switch(&mut self) -> Result<Query, String> {
+        self.expect("SWITCH")?;
+        self.expect("SCHEMA")?;
+
+        let schema_name = self.next().ok_or("Expected schema name")?;
+        Ok(Query::Switch(SwitchSchema { schema_name }))
     }
 
     pub fn parse_create(&mut self) -> Result<Query, String> {
@@ -133,7 +142,7 @@ impl Parser {
         self.expect("TABLE")?;
         let table_name = self.next().ok_or("Expected table name")?;
         self.expect("(")?;
-    
+
         let mut column_definitions = Vec::new();
         loop {
             let column_name = self.next().ok_or("Expected column name")?;
@@ -143,22 +152,24 @@ impl Parser {
             if column_name == "," {
                 continue;
             }
-            let data_type_str = self.next().ok_or(format!("Expected data type for column '{}'", column_name))?;
+            let data_type_str = self
+                .next()
+                .ok_or(format!("Expected data type for column '{}'", column_name))?;
             let data_type = match data_type_str.to_uppercase().as_str() {
                 "INTEGER" => Ok(DataType::Integer),
                 "TEXT" => Ok(DataType::Text),
                 _ => Err(format!("Unknown data type '{}'", data_type_str)),
             }?;
-            
+
             column_definitions.push(ColumnDefinition {
                 name: column_name,
                 data_type,
                 table_name: table_name.clone(),
             });
-            
+
             if self.peek().map(|s| s.as_str()) != Some(",") {
                 if self.peek().map(|s| s.as_str()) == Some(")") {
-                    self.next(); 
+                    self.next();
                     break;
                 }
             }
@@ -168,14 +179,14 @@ impl Parser {
             statement: CreateTable {
                 table_name,
                 column: column_definitions,
-            }
+            },
         }))
     }
 
     fn parse_expression(&mut self) -> Result<Expression, String> {
         let left = self.next().ok_or("Expected expression")?;
         let left_expr = self.parse_operand(left)?;
-        
+
         let op_str = self.next().ok_or("Expected operator")?;
         let operator = match op_str.as_str() {
             "=" => BinaryOperator::Eq,
@@ -196,17 +207,19 @@ impl Parser {
             Box::new(right_expr),
         ))
     }
-    
+
     fn parse_operand(&self, token: String) -> Result<Expression, String> {
         if let Ok(val) = token.parse::<i64>() {
-            return Ok(Expression::Literal(DynamicField::Integer(val.try_into().unwrap())));
+            return Ok(Expression::Literal(DynamicField::Integer(
+                val.try_into().unwrap(),
+            )));
         }
-        
+
         if token.starts_with('\'') && token.ends_with('\'') {
             let s = token.trim_matches('\'').to_string();
             return Ok(Expression::Literal(DynamicField::Text(s)));
         }
-        
+
         Ok(Expression::Identifier(token))
     }
 }
