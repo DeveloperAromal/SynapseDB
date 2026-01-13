@@ -1,4 +1,4 @@
-package executor
+package execute
 
 /*
 #cgo LDFLAGS: -L../../ffi/target/x86_64-pc-windows-gnu/release -lengine
