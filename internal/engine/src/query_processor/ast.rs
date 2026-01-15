@@ -6,10 +6,16 @@ pub enum Query {
     Select(Select),
     Insert(Insert),
     Create(Create),
+    Switch(Switch),
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Create {
+    pub statement: CreateTable,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Switch {
     pub statement: CreateTable,
 }
 

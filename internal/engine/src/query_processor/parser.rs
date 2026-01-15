@@ -1,7 +1,7 @@
 use super::ast::*;
 use crate::query_processor::tokenizer;
 use crate::storage::row::DynamicField;
-use crate::storage::schema::Schema;
+
 pub struct Parser {
     tokens: Vec<String>,
     position: usize,
@@ -41,7 +41,7 @@ impl Parser {
             Some("SELECT") => parser.parse_select(),
             Some("INSERT") => parser.parse_insert(),
             Some("CREATE") => parser.parse_create(),
-            // Some("SWITCH") => parser.parse_switch(),
+            Some("SWITCH") => parser.parse_switch(),
             Some(t) => Err(format!("Unknown query type '{}'", t)),
             None => Err("Empty query".to_string()),
         }
@@ -56,7 +56,7 @@ impl Parser {
             self.next();
         } else {
             loop {
-                let col = self.next().ok_or("Expected column name or '*'")?;
+                let col = self.next().ok_or("Expected column name")?;
                 columns.push(SelectColumn::Column(col));
                 if self.peek().map(|s| s.as_str()) != Some(",") {
                     break;
@@ -85,7 +85,7 @@ impl Parser {
     pub fn parse_insert(&mut self) -> Result<Query, String> {
         self.expect("INSERT")?;
         self.expect("INTO")?;
-        let table_name = self.next().ok_or("Expected table name after 'INTO'")?;
+        let table_name = self.next().ok_or("Expected table name")?;
 
         let mut columns = None;
         if self.peek().map(|s| s.as_str()) == Some("(") {
@@ -116,8 +116,7 @@ impl Parser {
                 if let Ok(num) = val.parse::<i64>() {
                     values.push(DynamicField::Integer(num.try_into().unwrap()));
                 } else {
-                    let cleaned_val = val.trim_matches('\'').to_string();
-                    values.push(DynamicField::Text(cleaned_val));
+                    values.push(DynamicField::Text(val.trim_matches('\'').to_string()));
                 }
             }
         }
@@ -134,7 +133,13 @@ impl Parser {
         self.expect("SCHEMA")?;
 
         let schema_name = self.next().ok_or("Expected schema name")?;
-        Ok(Query::Switch(SwitchSchema { schema_name }))
+
+        Ok(Query::Switch(Switch {
+            statement: CreateTable {
+                table_name: schema_name,
+                column: Vec::new(),
+            },
+        }))
     }
 
     pub fn parse_create(&mut self) -> Result<Query, String> {
@@ -144,6 +149,7 @@ impl Parser {
         self.expect("(")?;
 
         let mut column_definitions = Vec::new();
+
         loop {
             let column_name = self.next().ok_or("Expected column name")?;
             if column_name == ")" {
@@ -152,14 +158,13 @@ impl Parser {
             if column_name == "," {
                 continue;
             }
-            let data_type_str = self
-                .next()
-                .ok_or(format!("Expected data type for column '{}'", column_name))?;
+
+            let data_type_str = self.next().ok_or("Expected data type")?;
             let data_type = match data_type_str.to_uppercase().as_str() {
-                "INTEGER" => Ok(DataType::Integer),
-                "TEXT" => Ok(DataType::Text),
-                _ => Err(format!("Unknown data type '{}'", data_type_str)),
-            }?;
+                "INTEGER" => DataType::Integer,
+                "TEXT" => DataType::Text,
+                _ => return Err(format!("Unknown data type '{}'", data_type_str)),
+            };
 
             column_definitions.push(ColumnDefinition {
                 name: column_name,
@@ -167,11 +172,9 @@ impl Parser {
                 table_name: table_name.clone(),
             });
 
-            if self.peek().map(|s| s.as_str()) != Some(",") {
-                if self.peek().map(|s| s.as_str()) == Some(")") {
-                    self.next();
-                    break;
-                }
+            if self.peek().map(|s| s.as_str()) == Some(")") {
+                self.next();
+                break;
             }
         }
 
@@ -184,30 +187,31 @@ impl Parser {
     }
 
     fn parse_expression(&mut self) -> Result<Expression, String> {
-        let left = self.next().ok_or("Expected expression")?;
-        let left_expr = self.parse_operand(left)?;
+        let left_token = self.next().ok_or("Expected expression")?;
+        let left = self.parse_operand(left_token)?;
 
-        let op_str = self.next().ok_or("Expected operator")?;
-        let operator = match op_str.as_str() {
+        let operator: BinaryOperator = match self.next().ok_or("Expected operator")?.as_str() {
             "=" => BinaryOperator::Eq,
             "!=" => BinaryOperator::Neq,
             ">" => BinaryOperator::Gt,
             "<" => BinaryOperator::Lt,
             ">=" => BinaryOperator::Gte,
             "<=" => BinaryOperator::Lte,
-            _ => return Err(format!("Unknown operator '{}'", op_str)),
+            op => return Err(format!("Unknown operator '{}'", op)),
         };
 
-        let right = self.next().ok_or("Expected right-hand value")?;
-        let right_expr = self.parse_operand(right)?;
+        let right_token = self.next().ok_or("Expected RHS")?;
+        let right = self.parse_operand(right_token)?;
 
         Ok(Expression::BinaryOp(
-            Box::new(left_expr),
+            Box::new(left),
             operator,
-            Box::new(right_expr),
+            Box::new(right),
         ))
     }
 
+
+    
     fn parse_operand(&self, token: String) -> Result<Expression, String> {
         if let Ok(val) = token.parse::<i64>() {
             return Ok(Expression::Literal(DynamicField::Integer(
@@ -216,8 +220,9 @@ impl Parser {
         }
 
         if token.starts_with('\'') && token.ends_with('\'') {
-            let s = token.trim_matches('\'').to_string();
-            return Ok(Expression::Literal(DynamicField::Text(s)));
+            return Ok(Expression::Literal(DynamicField::Text(
+                token.trim_matches('\'').to_string(),
+            )));
         }
 
         Ok(Expression::Identifier(token))
