@@ -1,5 +1,21 @@
-#ifndef BC094C69_D025_4B0A_9F2E_DB22BFC7C517
-#define BC094C69_D025_4B0A_9F2E_DB22BFC7C517
+#ifndef TOKEN_H
+#define TOKEN_H
 
 
-#endif /* BC094C69_D025_4B0A_9F2E_DB22BFC7C517 */
+typedef enum {
+    TOKEN_KEYWORD,
+    TOKEN_IDENTIFIER,
+    TOKEN_OPERATOR,
+    TOKEN_NUMBER,
+    TOKEN_STRING,
+    TOKEN_EOF
+} TokenType;
+
+
+typedef struct {
+    TokenType type;
+    char value[64]
+}
+
+
+#endif /* TOKEN_H */
