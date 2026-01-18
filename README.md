@@ -67,56 +67,106 @@ Location: `ai/v1/get_sql.go`
 ## Project Structure
 
 ```
-SynapseDB/
-├── ai/                          # AI-powered SQL generation
-│   ├── v1/                      # Version 1 implementation
-│   │   └── get_sql.go          # OpenRouter integration
-│   └── v2/                      # Version 2 (future implementation)
-│       └── src/
-│           ├── nn/             # Neural network components
-│           └── utils/          # Utility functions
-├── api/                         # API server
-│   ├── execute/                 # Query execution layer
-│   │   ├── executor.go         # Go-Rust FFI bridge
-│   │   └── engine.dll          # Compiled Rust engine
-│   └── main.go                 # TCP server implementation
-├── assets/                      # Static assets
-│   └── synapse_thumb.png       # Project thumbnail
-├── cmd/                         # Command-line applications
-│   └── shell/
-│       └── main.go             # Interactive shell
-├── ffi/                         # Foreign Function Interface
-│   ├── Cargo.toml              # Rust crate configuration
-│   └── src/
-│       └── lib.rs              # C-compatible Rust functions
-├── internal/                    # Internal packages
-│   └── engine/                 # Core database engine
-│       ├── Cargo.toml          # Rust dependencies
-│       └── src/
-│           ├── lib.rs          # Engine entry point
-│           ├── query_processor/  # SQL parsing and execution
-│           │   ├── ast.rs      # Abstract syntax tree
-│           │   ├── executor.rs # Query execution logic
-│           │   ├── mod.rs      # Module definitions
-│           │   ├── parser.rs   # SQL parser
-│           │   └── tokenizer.rs # Lexical analysis
-│           └── storage/        # Storage engine
-│               ├── disk.rs     # Disk I/O operations
-│               ├── mod.rs      # Module definitions
-│               ├── page.rs     # Page data structure
-│               ├── row.rs      # Row data structure
-│               └── table.rs    # Table management
-├── synstore/                    # Data storage directory (runtime-generated)
-│   └── tables/                 # Persistent table data
-│       └── users/              # Example table storage
-│           ├── metadata.bin    # Table metadata
-│           └── page_0.bin      # Page data files
-├── tests/                       # Test files
-│   └── test.py                 # Python test suite
-├── main.go                      # Application entry point
-├── go.mod                       # Go module definition
-├── go.sum                       # Go dependency checksums
-└── README.md                    # This file
+SynapseDB
+├─ ai
+│  └─ v1
+│     └─ get_sql.go
+├─ api
+│  ├─ execute
+│  │  ├─ engine.dll
+│  │  ├─ executor.go
+│  │  ├─ executor_nocgo.go
+│  │  ├─ libgcc_s_seh-1.dll
+│  │  ├─ libstdc++-6.dll
+│  │  └─ libwinpthread-1.dll
+│  └─ main.go
+├─ assets
+│  └─ synapse_thumb.png
+├─ cmd
+│  ├─ security
+│  │  └─ startup.go
+│  ├─ shell
+│  │  └─ main.go
+│  └─ utils
+│     ├─ auth
+│     │  ├─ encryption
+│     │  │  └─ encrypt.go
+│     │  ├─ login
+│     │  │  └─ validate_user.go
+│     │  └─ signup
+│     │     └─ register_user.go
+│     ├─ background_process
+│     │  └─ background_check.go
+│     ├─ banner
+│     │  └─ banner.go
+│     └─ file
+│        └─ create_binary.go
+├─ compiler
+│  ├─ .clang-format
+│  ├─ lexer
+│  │  ├─ include
+│  │  │  ├─ lexer.h
+│  │  │  ├─ token.h
+│  │  │  └─ vocab.h
+│  │  └─ src
+│  │     ├─ helpers.c
+│  │     ├─ helpers.h
+│  │     └─ lexer.c
+│  ├─ output
+│  └─ parser
+│     ├─ include
+│     │  ├─ ast.h
+│     │  └─ parser.h
+│     └─ src
+│        ├─ ast.c
+│        └─ parser.c
+├─ engine.dll
+├─ ffi
+│  ├─ Cargo.toml
+│  └─ src
+│     └─ lib.rs
+├─ go.mod
+├─ go.sum
+├─ install.sh
+├─ internal
+│  └─ engine
+│     ├─ Cargo.toml
+│     └─ src
+│        ├─ lib.rs
+│        ├─ query_processor
+│        │  ├─ ast.rs
+│        │  ├─ executor.rs
+│        │  ├─ mod.rs
+│        │  ├─ parser.rs
+│        │  └─ tokenizer.rs
+│        └─ storage
+│           ├─ disk.rs
+│           ├─ mod.rs
+│           ├─ page.rs
+│           ├─ row.rs
+│           ├─ schema.rs
+│           └─ table.rs
+├─ libgcc_s_seh-1.dll
+├─ libstdc++-6.dll
+├─ libwinpthread-1.dll
+├─ LICENSE
+├─ main.go
+├─ README.md
+├─ server
+│  ├─ auth
+│  │  ├─ encryption
+│  │  │  └─ decrypt.go
+│  │  └─ login.go
+│  └─ connection
+│     ├─ parser.go
+│     └─ validate.go
+├─ synstore
+│  ├─ keys
+│  └─ tables
+│     └─ test1
+│        ├─ metadata.bin
+│        └─ page_0.bin
+└─ TODO.txt
 ```
 
 ## Features
@@ -353,3 +403,5 @@ Built with:
 
 
 **Note**: This project is currently under active development. Features and APIs may change rapidly. This documentation reflects the current state of the codebase and may not cover all experimental features or recent changes.
+
+```
