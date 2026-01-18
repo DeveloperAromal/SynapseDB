@@ -1,10 +1,8 @@
-#ifndef HELPERS_h
-#define HELPERS_h
-
+#ifndef HELPERS_H
+#define HELPERS_H
 
 #include "token.h"
 #include "vocab.h"
-
 
 void to_lower_case(char *s);
 

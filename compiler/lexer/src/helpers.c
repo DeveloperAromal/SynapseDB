@@ -1,6 +1,7 @@
-#include "helpers.h"
+#include "vocab.h"
 #include <ctype.h>
 #include <string.h>
+#include <stdio.h>
 
 
 void to_lower_case(char *s) {
@@ -34,9 +35,9 @@ int is_stop_word(const char *word) {
 
 const char *lookup(Mapping *table, const char *word) {
 
-    for (int i =  0; table[i].words != NULL; i++) {
+    for (int i =  0; table[i].word != NULL; i++) {
 
-        if (strcmp(table[i].words, word) == 0) {
+        if (strcmp(table[i].word, word) == 0) {
 
             return table[i].mapped;
 
@@ -44,7 +45,7 @@ const char *lookup(Mapping *table, const char *word) {
 
     }
 
-    return NULL
+    return NULL;
 
 }
 
