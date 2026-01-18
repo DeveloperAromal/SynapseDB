@@ -1,5 +1,6 @@
-#include "token.h"
-// #include "vocab.h"
+#include "lexer.h"
+#include "helpers.h"
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,25 +24,75 @@ int word_splitter(char *s, char *words[], int max_tokens) {
     return count;
 }
 
-void tokenizer(char *words) {
+int tokenizer(char *words[], int word_count, Token tokens[]) {
 
-    for (int i = 0; )
+    int token_count = 0;
+
+    for (int i = 0; i < word_count; i++)  {
+
+        char *w = words[i];
+
+        if (is_stop_word(w)) 
+    
+            continue;
+
+        const char *kw = lookup(KEYWORDS, w);
+
+        if (kw) {
+
+            tokens[token_count].type = TOKEN_KEYWORD;
+            strcpy(tokens[token_count].value, kw);
+            token_count++;
+            continue;
+
+        }
+
+        if (is_number(w)) {
+
+            tokens[token_count].type = TOKEN_NUMBER;
+            strcpy(tokens[token_count].value, w);
+            token_count++;
+            continue;
+        }
+
+        tokens[token_count].type = TOKEN_IDENTIFIER;
+        strcpy(tokens[token_count].value, w);
+        token_count++;
+
+    }
+
+
+    tokens[token_count].type = TOKEN_EOF;
+    tokens[token_count].value[0] = '\0';
+    token_count++;
+ 
+    return token_count;
+}
+
+
+int lex(char *input, Token tokens[]) {
+
+    char *words[MAX_TOKEN];
+
+    to_lower_case(input);
+
+    int word_count = word_splitter(input, words, MAX_TOKEN);
+
+    return tokenizer(words, word_count, tokens);
 
 }
 
+
 int main() {
     char text[] = "Select the name from users";
-    char *words[MAX_TOKEN];
+    Token tokens[MAX_TOKEN];
 
-    to_lower_case(text);
+    int count = lex(text, tokens);
 
-    int word_count = word_splitter(text, words, MAX_TOKEN);
-
-    printf("Tokens (%d):\n", word_count);
-
-    for (int i = 0; i < word_count; i++) {
-
-        printf("%s\n", words[i]);
+    for (int i = 0; i < count; i++) {
+        printf("type=%d value=%s\n",
+               tokens[i].type,
+               tokens[i].value);
     }
 
     return 0;

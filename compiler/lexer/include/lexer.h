@@ -1,5 +1,8 @@
-#ifndef B81748EA_A9FE_4E40_BE78_1019A11F9218
-#define B81748EA_A9FE_4E40_BE78_1019A11F9218
+#ifndef LEXER_H
+#define LEXER_H
 
+#include "token.h"
 
-#endif /* B81748EA_A9FE_4E40_BE78_1019A11F9218 */
+int lex(char *input, Token tokens[]);
+
+#endif /* LEXER_H */
