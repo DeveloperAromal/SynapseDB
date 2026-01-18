@@ -7,20 +7,10 @@
 
 #define MAX_TOKEN 256
 
-void to_lower_case(char *s) {
 
-    for (; *s; ++s) {
-
-        *s = (char)tolower((unsigned char)*s);
-
-        putchar(*s);
-    }
-
-    putchar('\n');
-}
 
 int word_splitter(char *s, char *words[], int max_tokens) {
-    
+
     int count = 0;
     char *token = strtok(s, " ");
 
@@ -28,10 +18,15 @@ int word_splitter(char *s, char *words[], int max_tokens) {
 
         words[count++] = token;
         token = strtok(NULL, " ");
-
     }
 
     return count;
+}
+
+void tokenizer(char *words) {
+
+    for (int i = 0; )
+
 }
 
 int main() {
@@ -47,8 +42,7 @@ int main() {
     for (int i = 0; i < word_count; i++) {
 
         printf("%s\n", words[i]);
-        
     }
-    
+
     return 0;
 }

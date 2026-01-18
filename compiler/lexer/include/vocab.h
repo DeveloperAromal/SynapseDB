@@ -4,7 +4,7 @@
 
 
 typedef struct {
-    const char *words;
+    const char *word;
     const char *mapped;
 } Mapping;
 
