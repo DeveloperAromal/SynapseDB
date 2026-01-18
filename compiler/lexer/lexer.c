@@ -1,14 +1,11 @@
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
 #include "token.h"
-#include "vocab.h"
-
+// #include "vocab.h"
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define MAX_TOKEN 256
-
-
 
 void to_lower_case(char *s) {
 
@@ -16,32 +13,42 @@ void to_lower_case(char *s) {
 
         *s = (char)tolower((unsigned char)*s);
 
-        putchar(*s);;
+        putchar(*s);
     }
 
     putchar('\n');
 }
 
-void word_splitter(char *s) {
-
-    char *tokens[MAX_TOKEN];
+int word_splitter(char *s, char *words[], int max_tokens) {
+    
     int count = 0;
-    char *token;
+    char *token = strtok(s, " ");
 
-    token = strtok(s, " ");
+    while (token != NULL && count < max_tokens) {
 
-
-    while (token != NULL && count < MAX_TOKEN) {
-        tokens[count++] = token;
+        words[count++] = token;
         token = strtok(NULL, " ");
+
     }
 
+    return count;
 }
-
 
 int main() {
     char text[] = "Select the name from users";
-    word_splitter(text);
+    char *words[MAX_TOKEN];
 
+    to_lower_case(text);
+
+    int word_count = word_splitter(text, words, MAX_TOKEN);
+
+    printf("Tokens (%d):\n", word_count);
+
+    for (int i = 0; i < word_count; i++) {
+
+        printf("%s\n", words[i]);
+        
+    }
+    
     return 0;
 }
