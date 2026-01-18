@@ -14,8 +14,8 @@ typedef enum {
 
 typedef struct {
     TokenType type;
-    char value[64]
-}
+    char value[64];
+} Token;
 
 
 #endif /* TOKEN_H */

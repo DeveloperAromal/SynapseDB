@@ -20,7 +20,7 @@ static Mapping KEYWORDS[] = {
     {"by", "BY"},
     {"limit", "LIMIT"},
     {NULL, NULL}
-}
+};
 
 
 static Mapping MULTI_OPS[][2] = {
