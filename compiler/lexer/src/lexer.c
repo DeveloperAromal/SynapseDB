@@ -84,7 +84,7 @@ int lex(char *input, Token tokens[]) {
 
 
 int main() {
-    char text[] = "Select the name from users";
+    char text[] = "Select not the name from users";
     Token tokens[MAX_TOKEN];
 
     int count = lex(text, tokens);
