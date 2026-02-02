@@ -10,10 +10,8 @@ void to_lower_case(char *s) {
 
         *s = (char)tolower((unsigned char)*s);
 
-        putchar(*s);
     }
 
-    putchar('\n');
 }
 
 

@@ -83,17 +83,14 @@ int lex(char *input, Token tokens[]) {
 }
 
 
-int main() {
-    char text[] = "Select not the name from users";
-    Token tokens[MAX_TOKEN];
-
-    int count = lex(text, tokens);
-
-    for (int i = 0; i < count; i++) {
-        printf("type=%d value=%s\n",
-               tokens[i].type,
-               tokens[i].value);
+const char *token_type_name(TokenType type) {
+    switch (type) {
+        case TOKEN_KEYWORD:   return "KEYWORD";
+        case TOKEN_IDENTIFIER:return "IDENTIFIER";
+        case TOKEN_OPERATOR:  return "OPERATOR";
+        case TOKEN_NUMBER:    return "NUMBER";
+        case TOKEN_STRING:    return "STRING";
+        case TOKEN_EOF:       return "EOF";
+        default:              return "UNKNOWN";
     }
-
-    return 0;
 }
