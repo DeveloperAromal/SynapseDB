@@ -31,7 +31,7 @@ int is_stop_word(const char *word) {
 
 
 
-const char *lookup(Mapping *table, const char *word) {
+const char *lookup(const Mapping *table, const char *word) {
 
     for (int i =  0; table[i].word != NULL; i++) {
 
