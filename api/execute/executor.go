@@ -7,7 +7,6 @@ package execute
 extern char* execute_sql(const char* sql);
 extern void free_string(char* ptr);
 */
-
 import "C"
 
 import "unsafe"

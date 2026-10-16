@@ -1,21 +1,24 @@
 package shell
 
 import (
-			"bufio"
-			"fmt"
-			"log"
-			"net"
-			"os"
-			"strings"
-			"time"
-			 banner "github.com/DeveloperAromal/SynapseDB/cmd/utils/banner"
-			 startup "github.com/DeveloperAromal/SynapseDB/cmd/security"
-			 validate "github.com/DeveloperAromal/SynapseDB/cmd/utils/auth/login"
-		)
+	"bufio"
+	"errors"
+	"fmt"
+	"io"
+	"log"
+	"net"
+	"os"
+	"strings"
+	"time"
+
+	startup "github.com/DeveloperAromal/SynapseDB/cmd/security"
+	validate "github.com/DeveloperAromal/SynapseDB/cmd/utils/auth/login"
+	banner "github.com/DeveloperAromal/SynapseDB/cmd/utils/banner"
+)
 
 func Runshell() {
 
-isNewUser := startup.StartUp()
+	isNewUser := startup.StartUp()
 
 	if !isNewUser {
 		banner.NShell_banner()
@@ -28,11 +31,9 @@ isNewUser := startup.StartUp()
 
 		time.Sleep(700 * time.Millisecond)
 	}
-	
 
 	host := "127.0.0.1"
 	port := "4538"
-
 
 	addr := net.JoinHostPort(host, port)
 
@@ -50,7 +51,9 @@ isNewUser := startup.StartUp()
 		log.Fatal("Connection error:", err)
 		return
 	}
-	defer conn.Close()
+	// This connection only confirms the server is up; every query opens its
+	// own. Holding it open would keep a server goroutine blocked on it.
+	conn.Close()
 
 	fmt.Print("Type \033[33mexit\033[0m to close the shell.\n")
 
@@ -58,60 +61,72 @@ isNewUser := startup.StartUp()
 
 	for {
 		fmt.Print("\033[32m$ \033[0m")
-		query, err := reader.ReadString('\n')
-
-		if err != nil {
+		line, err := reader.ReadString('\n')
+		if err != nil && !errors.Is(err, io.EOF) {
 			log.Println("Read error:", err)
-			continue
+			break
 		}
+		// io.EOF means stdin was closed (Ctrl+D, Ctrl+Z or the end of piped
+		// input): run what was typed before it, then exit.
+		atEOF := err != nil
 
-		query = strings.TrimSpace(query)
-		query = strings.ToLower(query)
+		query := strings.TrimSpace(line)
 
-		if strings.ToLower(query) == "exit" {
-			fmt.Println("\033[31mClosing Synapse Shell...\033[0m")
+		if strings.EqualFold(query, "exit") {
 			break
 		}
 
-		start := time.Now()
-
-		conn, err := net.Dial("tcp", addr)
-		if err != nil {
-			log.Println("Reconnection error:", err)
-			continue
+		// An empty write never reaches the server, so sending one would leave
+		// the shell waiting for a reply forever.
+		if query != "" {
+			sendQuery(addr, query)
 		}
 
-		_, err = conn.Write([]byte(query))
-		if err != nil {
-			log.Println("Send error:", err)
-			conn.Close()
-			continue
+		if atEOF {
+			fmt.Println()
+			break
 		}
-
-		buffer := make([]byte, 4096)
-		n, err := conn.Read(buffer)
-		conn.Close()
-
-		if err != nil {
-			log.Println("Read error:", err)
-			continue
-		}
-
-		end := time.Now()
-		fmt.Printf("\033[33mReceived:\n\033[0m \n\n")
-
-		output := string(buffer[:n])
-
-		output = strings.ReplaceAll(output, "+", "\033[90m+\033[0m")                     
-		output = strings.ReplaceAll(output, "|", "\033[90m|\033[0m")                  
-		output = strings.ReplaceAll(output, "id", "\033[96mid\033[0m")                   
-		output = strings.ReplaceAll(output, "name", "\033[96mname\033[0m")               
-		output = strings.ReplaceAll(output, "rows in set", "\033[93mrows in set\033[0m") 
-
-		fmt.Printf("%s\n", output)
-
-		fmt.Printf("\n\033[36mLatency:\033[0m ~ %dms\n", end.Sub(start).Milliseconds())
-
 	}
 
+	fmt.Println("\033[31mClosing Synapse Shell...\033[0m")
+}
+
+func sendQuery(addr, query string) {
+	start := time.Now()
+
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		log.Println("Reconnection error:", err)
+		return
+	}
+	defer conn.Close()
+
+	_, err = conn.Write([]byte(query))
+	if err != nil {
+		log.Println("Send error:", err)
+		return
+	}
+
+	// The server closes the connection after it replies, so read until EOF
+	// instead of a single fixed-size read that cuts long results short.
+	response, err := io.ReadAll(conn)
+	if err != nil {
+		log.Println("Read error:", err)
+		return
+	}
+
+	end := time.Now()
+	fmt.Printf("\033[33mReceived:\n\033[0m \n\n")
+
+	output := string(response)
+
+	output = strings.ReplaceAll(output, "+", "\033[90m+\033[0m")
+	output = strings.ReplaceAll(output, "|", "\033[90m|\033[0m")
+	output = strings.ReplaceAll(output, "id", "\033[96mid\033[0m")
+	output = strings.ReplaceAll(output, "name", "\033[96mname\033[0m")
+	output = strings.ReplaceAll(output, "rows in set", "\033[93mrows in set\033[0m")
+
+	fmt.Printf("%s\n", output)
+
+	fmt.Printf("\n\033[36mLatency:\033[0m ~ %dms\n", end.Sub(start).Milliseconds())
 }
