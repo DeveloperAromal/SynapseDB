@@ -7,7 +7,7 @@
 void to_lower_case(char *s);
 
 int is_stop_word(const char *word);
-const char *lookup(Mapping *table, const char *word);
+const char *lookup(const Mapping *table, const char *word);
 
 int is_number(const char *s);
 

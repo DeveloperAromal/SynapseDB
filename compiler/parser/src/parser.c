@@ -3,34 +3,28 @@
 #include "../../lexer/include/lexer.h"
 #include "../include/grammer.h"
 
-int main() {
+int main(void) {
     char input[256];
 
     printf("Enter Query: ");
-    fgets(input, sizeof(input), stdin);
+    if (fgets(input, sizeof(input), stdin) == NULL) {
+        printf("Invalid Query\n");
+        return 1;
+    }
 
     input[strcspn(input, "\n")] = 0;
 
-    Token tokens[256] = {0};
+    Token tokens[MAX_TOKENS] = {0};
     int count = lex(input, tokens);
 
     QueryAST ast = {0};
+    char sql[512];
 
-    if (parse_query(tokens, count, &ast)) {
-        if (ast.condition && strlen(ast.condition) > 0) {
-            printf("%s %s FROM %s WHERE %s;\n",
-                   ast.action ? ast.action : "",
-                   ast.field ? ast.field : "*",
-                   ast.table ? ast.table : "",
-                   ast.condition);
-        } else {
-            printf("%s %s FROM %s;\n",
-                   ast.action ? ast.action : "",
-                   ast.field ? ast.field : "*",
-                   ast.table ? ast.table : "");
-        }
+    if (parse_query(tokens, count, &ast) && query_to_sql(&ast, sql, sizeof(sql))) {
+        printf("%s\n", sql);
     } else {
         printf("Invalid Query\n");
+        return 1;
     }
 
     return 0;
