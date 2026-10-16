@@ -34,11 +34,7 @@ impl Page {
 
     #[allow(dead_code)]
     pub fn insert_row(&mut self, row: Row) {
-        let byte: Vec<u8> = bincode::serialize(&row).unwrap();
-
-        let bin_row: Row = bincode::deserialize(&byte).unwrap();
-
-        self.rows.push(bin_row);
+        self.rows.push(row);
         self.row_id += 1;
     }
 }

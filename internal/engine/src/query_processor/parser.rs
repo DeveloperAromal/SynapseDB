@@ -2,6 +2,8 @@ use super::ast::*;
 use crate::query_processor::tokenizer;
 use crate::storage::row::DynamicField;
 
+const MAX_TABLE_NAME_LEN: usize = 64;
+
 pub struct Parser {
     tokens: Vec<String>,
     position: usize,
@@ -33,8 +35,41 @@ impl Parser {
         }
     }
 
+    // Anything left over would otherwise be ignored without a word, so
+    // `WHERE a = 1 AND b = 2` would quietly drop its second condition.
+    fn expect_end(&mut self) -> Result<(), String> {
+        if self.peek().map(|s| s.as_str()) == Some(";") {
+            self.next();
+        }
+        match self.peek() {
+            Some(t) => Err(format!("Unexpected '{}' after end of statement", t)),
+            None => Ok(()),
+        }
+    }
+
+    // The table name becomes a directory under synstore/tables, so it must not
+    // be able to contain a path. It is stored lower case because SQL names are
+    // case-insensitive and file systems do not agree on case.
+    fn parse_table_name(&mut self) -> Result<String, String> {
+        let name = self.next().ok_or("Expected table name")?;
+
+        let mut chars = name.chars();
+        let valid = name.len() <= MAX_TABLE_NAME_LEN
+            && chars.next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
+            && chars.all(|c| c.is_ascii_alphanumeric() || c == '_');
+
+        if !valid {
+            return Err(format!(
+                "Invalid table name '{}': use up to {} letters, digits or underscores, not starting with a digit",
+                name, MAX_TABLE_NAME_LEN
+            ));
+        }
+
+        Ok(name.to_ascii_lowercase())
+    }
+
     pub fn parse(sql: &str) -> Result<Query, String> {
-        let tokens = tokenizer::tokensizer(sql);
+        let tokens = tokenizer::tokensizer(sql)?;
         let mut parser = Parser::new(tokens);
 
         match parser.peek().map(|s| s.as_str()) {
@@ -66,7 +101,7 @@ impl Parser {
         }
 
         self.expect("FROM")?;
-        let table_name = self.next().ok_or("Expected table name")?;
+        let table_name = self.parse_table_name()?;
 
         let where_clause = if self.peek().map(|s| s.as_str()) == Some("WHERE") {
             self.next();
@@ -74,6 +109,8 @@ impl Parser {
         } else {
             None
         };
+
+        self.expect_end()?;
 
         Ok(Query::Select(Select {
             table_name,
@@ -85,7 +122,7 @@ impl Parser {
     pub fn parse_insert(&mut self) -> Result<Query, String> {
         self.expect("INSERT")?;
         self.expect("INTO")?;
-        let table_name = self.next().ok_or("Expected table name")?;
+        let table_name = self.parse_table_name()?;
 
         let mut columns = None;
         if self.peek().map(|s| s.as_str()) == Some("(") {
@@ -113,13 +150,15 @@ impl Parser {
                 break;
             }
             if val != "," {
-                if let Ok(num) = val.parse::<i64>() {
-                    values.push(DynamicField::Integer(num.try_into().unwrap()));
-                } else {
-                    values.push(DynamicField::Text(val.trim_matches('\'').to_string()));
-                }
+                let value = match Self::parse_literal(&val)? {
+                    Some(value) => value,
+                    None => DynamicField::Text(val),
+                };
+                values.push(value);
             }
         }
+
+        self.expect_end()?;
 
         Ok(Query::Insert(Insert {
             table_name,
@@ -134,6 +173,8 @@ impl Parser {
 
         let schema_name = self.next().ok_or("Expected schema name")?;
 
+        self.expect_end()?;
+
         Ok(Query::Switch(Switch {
             statement: CreateTable {
                 table_name: schema_name,
@@ -145,7 +186,7 @@ impl Parser {
     pub fn parse_create(&mut self) -> Result<Query, String> {
         self.expect("CREATE")?;
         self.expect("TABLE")?;
-        let table_name = self.next().ok_or("Expected table name")?;
+        let table_name = self.parse_table_name()?;
         self.expect("(")?;
 
         let mut column_definitions = Vec::new();
@@ -163,6 +204,8 @@ impl Parser {
             let data_type = match data_type_str.to_uppercase().as_str() {
                 "INTEGER" => DataType::Integer,
                 "TEXT" => DataType::Text,
+                "PHONENUMBER" => DataType::Phonenumber,
+                "EMAIL" => DataType::Email,
                 _ => return Err(format!("Unknown data type '{}'", data_type_str)),
             };
 
@@ -177,6 +220,8 @@ impl Parser {
                 break;
             }
         }
+
+        self.expect_end()?;
 
         Ok(Query::Create(Create {
             statement: CreateTable {
@@ -211,20 +256,30 @@ impl Parser {
     }
 
 
-    
+
     fn parse_operand(&self, token: String) -> Result<Expression, String> {
-        if let Ok(val) = token.parse::<i64>() {
-            return Ok(Expression::Literal(DynamicField::Integer(
-                val.try_into().unwrap(),
-            )));
+        match Self::parse_literal(&token)? {
+            Some(value) => Ok(Expression::Literal(value)),
+            None => Ok(Expression::Identifier(token)),
+        }
+    }
+
+    /// Parses an integer or a quoted string, and returns `None` for any other token.
+    fn parse_literal(token: &str) -> Result<Option<DynamicField>, String> {
+        // The tokenizer only produces a token starting with a quote for a
+        // complete string literal, quotes included.
+        if token.starts_with('\'') {
+            return Ok(Some(DynamicField::Text(token[1..token.len() - 1].to_string())));
         }
 
-        if token.starts_with('\'') && token.ends_with('\'') {
-            return Ok(Expression::Literal(DynamicField::Text(
-                token.trim_matches('\'').to_string(),
-            )));
+        let digits = token.strip_prefix(['-', '+']).unwrap_or(token);
+        if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
+            return Ok(None);
         }
 
-        Ok(Expression::Identifier(token))
+        token
+            .parse::<i32>()
+            .map(|n| Some(DynamicField::Integer(n)))
+            .map_err(|_| format!("Integer {} is out of range ({} to {})", token, i32::MIN, i32::MAX))
     }
 }

@@ -1,5 +1,5 @@
 use super::ast::*;
-use crate::storage::disk::load_data;
+use crate::storage::disk::{load_data, read_metadata};
 use crate::storage::row::{DynamicField, Row, Field};
 use crate::storage::table::{Metadata, Table};
 use std::fs;
@@ -7,11 +7,12 @@ use std::fs;
 #[derive(Debug, Clone)]
 pub struct SelectResult {
     pub headers: Vec<String>,
-    pub rows: Vec<Vec<DynamicField>>,
+    /// One entry per header; `None` when the row has no such column.
+    pub rows: Vec<Vec<Option<DynamicField>>>,
 }
 
-pub fn execute_select(select: &Select) -> SelectResult {
-    let rows = load_data(&select.table_name);
+pub fn execute_select(select: &Select) -> Result<SelectResult, String> {
+    let rows = load_data(&select.table_name)?;
 
     let filtered_rows: Vec<_> = if let Some(expr) = &select.where_clause {
         rows.into_iter()
@@ -21,36 +22,20 @@ pub fn execute_select(select: &Select) -> SelectResult {
         rows
     };
 
-    let headers: Vec<String> = match select.columns.as_slice() {
-        [SelectColumn::All] => {
-            filtered_rows
-                .get(0)
-                .map(|r| r.fields.iter().map(|f| f.name.clone()).collect())
-                .unwrap_or_default()
-        }
-        _ => select
-            .columns
-            .iter()
-            .filter_map(|c| match c {
-                SelectColumn::Column(name) => Some(name.clone()),
-                SelectColumn::All => None,
-            })
-            .collect(),
-    };
+    let headers = select_headers(&filtered_rows, &select.columns);
 
-    let data_rows: Vec<Vec<DynamicField>> = filtered_rows
-        .into_iter()
-        .map(|row| select_columns(&row, &select.columns))
+    let data_rows: Vec<Vec<Option<DynamicField>>> = filtered_rows
+        .iter()
+        .map(|row| headers.iter().map(|name| field_value(row, name)).collect())
         .collect();
 
-    SelectResult { headers, rows: data_rows }
+    Ok(SelectResult { headers, rows: data_rows })
 }
 
 pub fn execute_insert(insert: &Insert) -> Result<(), String> {
-    let metadata = read_metadata(&insert.table_name)
-        .ok_or_else(|| format!("Table '{}' not found", insert.table_name))?;
+    let metadata = read_metadata(&insert.table_name)?;
 
-    let existing_rows = load_data(&insert.table_name);
+    let existing_rows = load_data(&insert.table_name)?;
 
     let new_rows = build_rows_from_insert(insert)?;
 
@@ -63,8 +48,7 @@ pub fn execute_insert(insert: &Insert) -> Result<(), String> {
         table.insert_row(row);
     }
 
-    table.save_to_disk();
-    Ok(())
+    table.save_to_disk()
 }
 
 pub fn execute_create(create: &Create) -> Result<(), String> {
@@ -91,12 +75,6 @@ pub fn execute_create(create: &Create) -> Result<(), String> {
     Ok(())
 }
 
-fn read_metadata(table_name: &str) -> Option<Metadata> {
-    let meta_path = format!("synstore/tables/{}/metadata.bin", table_name);
-    let bytes = fs::read(meta_path).ok()?;
-    bincode::deserialize::<Metadata>(&bytes).ok()
-}
-
 fn build_rows_from_insert(insert: &Insert) -> Result<Vec<Row>, String> {
     match &insert.columns {
         None => Err("INSERT requires explicit column list for now".to_string()),
@@ -115,6 +93,35 @@ fn build_rows_from_insert(insert: &Insert) -> Result<Vec<Row>, String> {
             Ok(rows)
         }
     }
+}
+
+// Rows of one table can have different columns, because INSERT does not yet
+// check them against the table definition, so `*` lists every column found.
+fn select_headers(rows: &[Row], columns: &[SelectColumn]) -> Vec<String> {
+    if !columns.contains(&SelectColumn::All) {
+        return columns
+            .iter()
+            .filter_map(|c| match c {
+                SelectColumn::Column(name) => Some(name.clone()),
+                SelectColumn::All => None,
+            })
+            .collect();
+    }
+
+    let mut headers: Vec<String> = Vec::new();
+    for field in rows.iter().flat_map(|row| &row.fields) {
+        if !headers.iter().any(|h| h.eq_ignore_ascii_case(&field.name)) {
+            headers.push(field.name.clone());
+        }
+    }
+    headers
+}
+
+fn field_value(row: &Row, name: &str) -> Option<DynamicField> {
+    row.fields
+        .iter()
+        .find(|f| f.name.eq_ignore_ascii_case(name))
+        .map(|f| f.value.clone())
 }
 
 fn evaluate_expression(row: &Row, expr: &Expression) -> bool {
@@ -138,29 +145,8 @@ fn evaluate_expression(row: &Row, expr: &Expression) -> bool {
 fn get_field_value(row: &Row, expr: &Expression) -> Option<DynamicField> {
     match expr {
         Expression::Literal(v) => Some(v.clone()),
-        Expression::Identifier(name) => row
-            .fields
-            .iter()
-            .find(|f| f.name.eq_ignore_ascii_case(name))
-            .map(|f| f.value.clone()),
+        Expression::Identifier(name) => field_value(row, name),
         Expression::BinaryOp(_, _, _) => None,
-    }
-}
-
-fn select_columns(row: &Row, columns: &Vec<SelectColumn>) -> Vec<DynamicField> {
-    match columns.as_slice() {
-        [SelectColumn::All] => row.fields.iter().map(|f| f.value.clone()).collect(),
-        _ => columns
-            .iter()
-            .filter_map(|c| match c {
-                SelectColumn::All => None,
-                SelectColumn::Column(name) => row
-                    .fields
-                    .iter()
-                    .find(|f| f.name.eq_ignore_ascii_case(name))
-                    .map(|f| f.value.clone()),
-            })
-            .collect(),
     }
 }
 

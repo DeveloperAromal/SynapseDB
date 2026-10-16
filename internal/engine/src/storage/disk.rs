@@ -1,66 +1,47 @@
 use crate::storage::{page, row, table::Metadata};
-use std::{fs, path::Path};
+use std::{fs, io};
 
+// Errors are returned rather than skipped: INSERT rewrites the whole table from
+// what this returns, so a page silently left out would be deleted from disk.
 #[allow(dead_code)]
-pub fn load_data(table_name: &str) -> Vec<row::Row> {
-    let meta_path = format!("synstore/tables/{}/metadata.bin", table_name);
-    println!("{}", table_name);
-
-    if !Path::new(&meta_path).exists() {
-        println!("Metadata not found for {}", table_name);
-        return Vec::new();
-    }
-
-    let read_meta_byte = fs::read(&meta_path).unwrap_or_else(|e| {
-        println!("Failed to read metadata file: {}", e);
-        Vec::new()
-    });
-
-    if read_meta_byte.is_empty() {
-        println!("Metadata file is empty: {}", meta_path);
-        return Vec::new();
-    }
-    
-    let meta_data: Metadata = match bincode::deserialize(&read_meta_byte) {
-        Ok(m) => m,
-        Err(e) => {
-            println!("Failed to deserialize metadata: {}", e);
-            return Vec::new();
-        }
-    };
-
-    if meta_data.name != table_name {
-        println!("Table not found");
-        return Vec::new();
-    }
+pub fn load_data(table_name: &str) -> Result<Vec<row::Row>, String> {
+    let meta_data = read_metadata(table_name)?;
 
     let mut all_table_rows = Vec::new();
 
     for page_index in 0..meta_data.num_of_pages {
         let page_path = format!("synstore/tables/{}/page_{}.bin", table_name, page_index);
-        let page_bytes = match fs::read(&page_path) {
-            Ok(bytes) => bytes,
-            Err(e) => {
-                println!("Failed to read page file {}: {}", page_path, e);
-                continue;
-            }
-        };
+        let page_bytes = fs::read(&page_path)
+            .map_err(|e| format!("Failed to read page file {}: {}", page_path, e))?;
 
-        if page_bytes.is_empty() {
-            println!("Page file is empty: {}", page_path);
-            continue;
-        }
-
-        let page::Page { rows, .. } = match bincode::deserialize(&page_bytes) {
-            Ok(page) => page,
-            Err(e) => {
-                println!("Failed to deserialize page {}: {}", page_path, e);
-                continue;
-            }
-        };
+        let page::Page { rows, .. } = bincode::deserialize(&page_bytes)
+            .map_err(|e| format!("Failed to deserialize page {}: {}", page_path, e))?;
 
         all_table_rows.extend(rows);
     }
 
-    all_table_rows
+    Ok(all_table_rows)
+}
+
+pub fn read_metadata(table_name: &str) -> Result<Metadata, String> {
+    let meta_path = format!("synstore/tables/{}/metadata.bin", table_name);
+
+    let read_meta_byte = match fs::read(&meta_path) {
+        Ok(bytes) => bytes,
+        Err(e) if e.kind() == io::ErrorKind::NotFound => {
+            return Err(format!("Table '{}' not found", table_name));
+        }
+        Err(e) => return Err(format!("Failed to read metadata file {}: {}", meta_path, e)),
+    };
+
+    let meta_data: Metadata = bincode::deserialize(&read_meta_byte)
+        .map_err(|e| format!("Failed to deserialize metadata {}: {}", meta_path, e))?;
+
+    // Table names are case-insensitive, and tables created before names were
+    // lower-cased may have stored their original spelling.
+    if !meta_data.name.eq_ignore_ascii_case(table_name) {
+        return Err(format!("Table '{}' not found", table_name));
+    }
+
+    Ok(meta_data)
 }

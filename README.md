@@ -175,7 +175,7 @@ SynapseDB
 
 - **SQL Query Support**:
   - `CREATE TABLE`: Define new tables with typed columns
-  - `INSERT INTO`: Add rows to tables
+  - `INSERT INTO`: Add rows to tables (the column list is required)
   - `SELECT`: Query data with optional WHERE clauses
 
 - **Data Types**:
@@ -328,7 +328,7 @@ SQL queries can also be executed directly:
 
 ```
 ~> CREATE TABLE users (id INTEGER, name TEXT, email EMAIL);
-~> INSERT INTO users VALUES (1, 'John Doe', 'john@example.com');
+~> INSERT INTO users (id, name, email) VALUES (1, 'John Doe', 'john@example.com');
 ~> SELECT * FROM users;
 ```
 
