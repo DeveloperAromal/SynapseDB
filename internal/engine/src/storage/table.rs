@@ -69,14 +69,17 @@ impl Table {
     }
 
     #[allow(dead_code)]
-    pub fn save_to_disk(&self) {
-        let table_path = format!("synstore/tables/{}", self.name.clone());
-        std::fs::create_dir_all(table_path).unwrap();
+    pub fn save_to_disk(&self) -> Result<(), String> {
+        let table_path = format!("synstore/tables/{}", self.name);
+        fs::create_dir_all(&table_path)
+            .map_err(|e| format!("Failed to create table dir {}: {}", table_path, e))?;
         for (i, page) in self.pages.iter().enumerate() {
-            let data_byte: Vec<u8> = bincode::serialize(page).unwrap();
+            let data_byte: Vec<u8> = bincode::serialize(page)
+                .map_err(|e| format!("Failed to serialize page {}: {}", i, e))?;
 
-            let file_path = format!("synstore/tables/{}/page_{}.bin", self.name.clone(), i);
-            fs::write(file_path, data_byte).unwrap();
+            let file_path = format!("{}/page_{}.bin", table_path, i);
+            fs::write(&file_path, data_byte)
+                .map_err(|e| format!("Failed to write page file {}: {}", file_path, e))?;
         }
 
         let table_metadata = Metadata {
@@ -86,8 +89,10 @@ impl Table {
             max_rows_per_page: self.max_rows_per_page,
         };
 
-        let meta_byte = bincode::serialize(&table_metadata).unwrap();
-        let meta_path = format!("synstore/tables/{}/metadata.bin", self.name.clone());
-        fs::write(meta_path, meta_byte).unwrap();
+        let meta_byte = bincode::serialize(&table_metadata)
+            .map_err(|e| format!("Failed to serialize metadata: {}", e))?;
+        let meta_path = format!("{}/metadata.bin", table_path);
+        fs::write(&meta_path, meta_byte)
+            .map_err(|e| format!("Failed to write metadata file {}: {}", meta_path, e))
     }
 }

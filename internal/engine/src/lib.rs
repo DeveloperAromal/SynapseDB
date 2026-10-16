@@ -5,8 +5,18 @@ use query_processor::ast::Query;
 use query_processor::executor::{execute_select, execute_insert, execute_create, SelectResult};
 use storage::row::DynamicField;
 use query_processor::parser::Parser;
+use std::sync::Mutex;
+
+// Statements read and rewrite whole tables under synstore/, and the server
+// runs every connection on its own goroutine. Without this lock two INSERTs
+// into one table can both start from the same old rows, and one is lost.
+static ENGINE_LOCK: Mutex<()> = Mutex::new(());
 
 pub fn run_query(query: &str) -> String {
+    // A panic while the lock is held poisons it. The files on disk are the
+    // only state, so later statements can still run safely.
+    let _guard = ENGINE_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+
     match Parser::parse(query) {
         Ok(Query::Create(create)) => {
             execute_create(&create)
@@ -19,8 +29,9 @@ pub fn run_query(query: &str) -> String {
                 .unwrap_or_else(|e| format!("Error: {}", e))
         }
         Ok(Query::Select(select)) => {
-            let result = execute_select(&select);
-            format_select_result(result)
+            execute_select(&select)
+                .map(format_select_result)
+                .unwrap_or_else(|e| format!("Error: {}", e))
         }
         #[allow(dead_code)]
         Ok(_) => "Unsupported query".to_string(),
@@ -38,13 +49,11 @@ fn format_select_result(result: SelectResult) -> String {
         return "Empty set".to_string();
     }
 
-    let mut col_widths = vec![0; result.headers.len()];
-    for (i, header) in result.headers.iter().enumerate() {
-        col_widths[i] = header.len();
-    }
+    // Widths are counted in characters because that is what `{:width$}` pads to.
+    let mut col_widths: Vec<usize> = result.headers.iter().map(|h| h.chars().count()).collect();
     for row in &result.rows {
         for (i, field) in row.iter().enumerate() {
-            col_widths[i] = max(col_widths[i], format_field(field).len());
+            col_widths[i] = max(col_widths[i], format_field(field).chars().count());
         }
     }
 
@@ -92,11 +101,12 @@ fn format_select_result(result: SelectResult) -> String {
     lines.join("\n")
 }
 
-fn format_field(f: &DynamicField) -> String {
+fn format_field(f: &Option<DynamicField>) -> String {
     match f {
-        DynamicField::Integer(v) => v.to_string(),
-        DynamicField::Text(s)
-        | DynamicField::Phonennumber(s)
-        | DynamicField::Email(s) => s.clone(),
+        Some(DynamicField::Integer(v)) => v.to_string(),
+        Some(DynamicField::Text(s))
+        | Some(DynamicField::Phonennumber(s))
+        | Some(DynamicField::Email(s)) => s.clone(),
+        None => "NULL".to_string(),
     }
 }
