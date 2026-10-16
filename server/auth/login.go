@@ -1,13 +1,13 @@
 package login
 
 import (
-	"encoding/json" 
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 
-	encryption "github.com/DeveloperAromal/SynapseDB/server/auth/encryption"
 	file "github.com/DeveloperAromal/SynapseDB/cmd/utils/file"
+	encryption "github.com/DeveloperAromal/SynapseDB/server/auth/encryption"
 )
 
 type Credentials struct {
@@ -23,49 +23,53 @@ func readAndParseCredentials(filePath string) (*Credentials, error) {
 	}
 
 	contents := file.ReadBin(filePath)
-    
-    contents = strings.TrimSpace(contents)
-	contents = strings.Trim(contents, "\x00") 
+
+	contents = strings.TrimSpace(contents)
+	contents = strings.Trim(contents, "\x00")
 
 	var creds Credentials
-	
+
 	err := json.Unmarshal([]byte(contents), &creds)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse credentials file: %w", err)
 	}
-    
-    cachedCredentials = &creds
-    
+
+	cachedCredentials = &creds
+
 	return &creds, nil
 }
 func GetPassword(keyContents string) (string, error) {
 	const filePath = "synstore/keys/master.keys.bin"
-    
+
 	creds, err := readAndParseCredentials(filePath)
 	if err != nil {
-		return "", errors.New("PASSWORD not found") 
+		return "", errors.New("PASSWORD not found")
 	}
 	return creds.Password, nil
 }
 
 func GetUsername(keyContents string) (string, error) {
 	const filePath = "synstore/keys/master.keys.bin"
-    
+
 	creds, err := readAndParseCredentials(filePath)
 	if err != nil {
-		return "", errors.New("USERNAME not found") 
+		return "", errors.New("USERNAME not found")
 	}
 	return creds.Username, nil
 }
 func ValidateUser(password string, username string) (bool, bool) {
 
-
-	bin_hash_pass, err := GetPassword("") 
+	bin_hash_pass, err := GetPassword("")
 	if err != nil {
 		panic(err)
 	}
 
-	isValidUsername := encryption.ValidateHash(password, bin_hash_pass)
+	stored_username, err := GetUsername("")
+	if err != nil {
+		panic(err)
+	}
+
+	isValidUsername := username == stored_username
 	isValidPassword := encryption.ValidateHash(password, bin_hash_pass)
 
 	return isValidPassword, isValidUsername

@@ -212,7 +212,7 @@ The project is under active development. Future enhancements may include:
 
 ### Required Software
 
-- **Go**: Version 1.22.5 or later
+- **Go**: Version 1.24 or later
 - **Rust**: Latest stable version with Cargo
 - **C Compiler**: Required for building the FFI layer (MinGW on Windows, GCC on Linux/Mac)
 - **OpenRouter API Key**: For AI-powered SQL generation (optional, for natural language queries)
@@ -220,7 +220,7 @@ The project is under active development. Future enhancements may include:
 ### Platform Support
 
 Currently tested and supported on:
-- Windows (x86_64-pc-windows-msvc)
+- Windows (x86_64-pc-windows-gnu, built with MinGW-w64)
 
 Cross-platform support may require additional configuration for the FFI layer.
 
@@ -240,19 +240,21 @@ Cross-platform support may require additional configuration for the FFI layer.
    cargo build --release
    ```
 
-3. **Build the FFI layer**:
+3. **Build the FFI layer** for the GNU target, which is what cgo links against with MinGW:
    ```bash
    cd ../../ffi
-   cargo build --release --target x86_64-pc-windows-msvc
+   rustup target add x86_64-pc-windows-gnu
+   cargo build --release --target x86_64-pc-windows-gnu
    ```
 
-4. **Copy the compiled DLL** to the appropriate location:
+4. **Copy the compiled DLL** to the repository root, next to the executable, where Windows looks for it at startup:
    ```bash
-   # Copy engine.dll to api/execute/ or update FFI LDFLAGS path
+   cp target/x86_64-pc-windows-gnu/release/engine.dll ..
    ```
 
 5. **Install Go dependencies**:
    ```bash
+   cd ..
    go mod download
    ```
 
@@ -272,7 +274,7 @@ OPENROUTER_REFERER=your_referer_url (optional)
 OPENROUTER_TITLE=your_app_title (optional)
 ```
 
-The `MODEL` variable is optional and defaults to `meta-llama/llama-3.1-8b-instruct:free` if not specified.
+The `MODEL` variable is optional and defaults to `deepseek/deepseek-r1-0528:free` if not specified. The `.env` file itself is optional: the same variables can be set in the environment instead, and input that is already SQL runs without an API key.
 
 ## Usage
 

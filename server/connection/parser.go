@@ -7,12 +7,12 @@ import (
 )
 
 type ConnInfo struct {
-						Username string
-						Password string
-						Host     string
-						DBName   string
-						SSL      string
-					}
+	Username string
+	Password string
+	Host     string
+	DBName   string
+	SSL      string
+}
 
 func parseUrl(connStr string) (*ConnInfo, error) {
 
@@ -22,7 +22,7 @@ func parseUrl(connStr string) (*ConnInfo, error) {
 		return nil, errors.New("invalid connection string")
 	}
 
-	if u.User != nil {
+	if u.User == nil || u.User.Username() == "" {
 		return nil, errors.New("missing credentials")
 
 	}
@@ -33,10 +33,10 @@ func parseUrl(connStr string) (*ConnInfo, error) {
 	ssl := u.Query().Get("ssl")
 
 	return &ConnInfo{
-						Username: username,
-						Password: password,
-						Host:     host,
-						DBName:   dbName,
-						SSL:      ssl,
-					}, nil
+		Username: username,
+		Password: password,
+		Host:     host,
+		DBName:   dbName,
+		SSL:      ssl,
+	}, nil
 }

@@ -67,3 +67,6 @@ target
 /ffi/target
 ffi/target
 
+# Runtime data: tables and the local master key are created on first run
+synstore/
+
